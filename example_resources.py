@@ -1,5 +1,5 @@
 import time
-from coapthon.resources.resource import Resource
+from microcoapthon.resources.resource import Resource
 
 __author__ = 'Giacomo Tanganelli'
 __version__ = "2.0"
