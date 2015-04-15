@@ -1,7 +1,7 @@
-import random
-import socketserver
+import libs.random
 from threading import Timer
 import time
+from libs import socketserver
 from microcoapthon import defines
 from microcoapthon.layers.blockwise import BlockwiseLayer
 from microcoapthon.layers.message import MessageLayer
@@ -34,7 +34,7 @@ class CoAP(socketserver.UDPServer):
         self.call_id = {}
         self.relation = {}
         self.blockwise = {}
-        self._currentMID = random.randint(1, 1000)
+        self._currentMID = libs.random.randint(1, 1000)
         root = Resource('root', self, visible=False, observable=False, allow_children=True)
         root.path = '/'
         self.root = Tree(root)
@@ -386,7 +386,7 @@ class CoAP(socketserver.UDPServer):
         """
         host, port = response.destination
         if response.type == defines.inv_types['CON']:
-            future_time = random.uniform(defines.ACK_TIMEOUT, (defines.ACK_TIMEOUT * defines.ACK_RANDOM_FACTOR))
+            future_time = libs.random.uniform(defines.ACK_TIMEOUT, (defines.ACK_TIMEOUT * defines.ACK_RANDOM_FACTOR))
             key = hash(str(host) + str(port) + str(response.mid))
             self.call_id[key] = Timer(future_time, self.retransmit, (request, response, resource, future_time))
             self.call_id[key].start()
