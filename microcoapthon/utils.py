@@ -1,4 +1,3 @@
-from threading import Timer
 from microcoapthon import defines
 
 __author__ = 'Giacomo Tanganelli'
@@ -20,26 +19,27 @@ def bit_len(int_type):
     return length
 
 
-class RepeatingTimer(object):
-
-    def __init__(self, interval, f, *args, **kwargs):
-        self.interval = interval
-        self.f = f
-        self.args = args
-        self.kwargs = kwargs
-
-        self.timer = None
-
-    def callback(self):
-        self.f(*self.args, **self.kwargs)
-        self.start()
-
-    def cancel(self):
-        self.timer.cancel()
-
-    def start(self):
-        self.timer = Timer(self.interval, self.callback)
-        self.timer.start()
+# class RepeatingTimer(object):
+#
+#     def __init__(self, interval, f, *args, **kwargs):
+#         self.interval = interval
+#         self.f = f
+#         self.args = args
+#         self.kwargs = kwargs
+#
+#         self.timer = None
+#
+#     def callback(self):
+#         self.f(*self.args, **self.kwargs)
+#         self.start()
+#
+#     def cancel(self):
+#         self.timer.cancel()
+#
+#     def start(self):
+#         from threading import Timer
+#         self.timer = Timer(self.interval, self.callback)
+#         self.timer.start()
 
 
 class BitManipulationWriter(object):

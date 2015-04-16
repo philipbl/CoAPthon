@@ -1,7 +1,6 @@
 import logging
 import time
 from microcoapthon import defines
-from threading import Timer
 from microcoapthon.messages.message import Message
 
 __author__ = 'Giacomo Tanganelli'
@@ -118,9 +117,10 @@ class MessageLayer(object):
         :param request: the request
         :return: the timer object
         """
-        t = Timer(defines.SEPARATE_TIMEOUT, self.send_ack, [request])
-        t.start()
-        return t
+        # t = Timer(defines.SEPARATE_TIMEOUT, self.send_ack, [request])
+        # t.start()
+        # return t
+        return None
 
     @staticmethod
     def stop_separate_timer(timer):
@@ -130,7 +130,7 @@ class MessageLayer(object):
         :param timer: the timer object
         :return: True
         """
-        timer.cancel()
+        # timer.cancel()
         return True
 
     def send_separate(self, request):

@@ -1,7 +1,5 @@
-import libs.random
-from threading import Timer
+from random import Random
 import time
-from libs import socketserver
 from microcoapthon import defines
 from microcoapthon.layers.blockwise import BlockwiseLayer
 from microcoapthon.layers.message import MessageLayer
@@ -14,13 +12,14 @@ from microcoapthon.messages.response import Response
 from microcoapthon.resources.resource import Resource
 from microcoapthon.serializer import Serializer
 import logging
-from microcoapthon.utils import Tree, RepeatingTimer
+from microcoapthon.utils import Tree
+import socket
 
 __author__ = 'Giacomo Tanganelli'
 __version__ = "1.0"
 
 
-class CoAP(socketserver.UDPServer):
+class CoAP(object):
     allow_reuse_address = True
 
     def __init__(self, server_address, multicast=False):
@@ -28,13 +27,15 @@ class CoAP(socketserver.UDPServer):
         Initialize the CoAP protocol
 
         """
-        super().__init__(server_address, None)
+        self.server_address = server_address
+
         self.received = {}
         self.sent = {}
         self.call_id = {}
         self.relation = {}
         self.blockwise = {}
-        self._currentMID = libs.random.randint(1, 1000)
+        rnd = Random()
+        self._currentMID = rnd.randint(1, 1000)
         root = Resource('root', self, visible=False, observable=False, allow_children=True)
         root.path = '/'
         self.root = Tree(root)
@@ -45,10 +46,18 @@ class CoAP(socketserver.UDPServer):
         self._observe_layer = ObserveLayer(self)
 
         # Start a task for purge MIDs
-        self.l = RepeatingTimer(defines.EXCHANGE_LIFETIME, self.purge_mids)
-        self.l.start()
+        # self.l = RepeatingTimer(defines.EXCHANGE_LIFETIME, self.purge_mids)
+        # self.l.start()
 
         self.multicast = multicast
+
+        self._socket = socket.socket(socket.AF_INET, socket.SOCK_SGRAM)
+        self._socket.bind(self.server_address)
+
+    def serve_forever(self):
+        while True:
+            data, client_address = self._socket.recvfrom(1024)
+            self.finish_request(data, client_address)
 
     def send(self, message, host, port):
         """
@@ -64,9 +73,9 @@ class CoAP(socketserver.UDPServer):
         print("----------------------------------------")
         serializer = Serializer()
         message = serializer.serialize(message)
-        self.socket.sendto(message, (host, port))
+        self._socket.sendto(message, (host, port))
 
-    def finish_request(self, request, client_address):
+    def finish_request(self, data, client_address):
         """
         Handler for received UDP datagram.
 
@@ -75,8 +84,6 @@ class CoAP(socketserver.UDPServer):
         port = client_address[1]
         logging.info("Datagram received from " + str(host) + ":" + str(port))
         serializer = Serializer()
-        data = request[0]
-        self.socket = request[1]
         message = serializer.deserialize(data, host, port)
         print("Message received from " + host + ":" + str(port))
         print("----------------------------------------")
@@ -386,10 +393,10 @@ class CoAP(socketserver.UDPServer):
         """
         host, port = response.destination
         if response.type == defines.inv_types['CON']:
-            future_time = libs.random.uniform(defines.ACK_TIMEOUT, (defines.ACK_TIMEOUT * defines.ACK_RANDOM_FACTOR))
+            future_time = random.uniform(defines.ACK_TIMEOUT, (defines.ACK_TIMEOUT * defines.ACK_RANDOM_FACTOR))
             key = hash(str(host) + str(port) + str(response.mid))
-            self.call_id[key] = Timer(future_time, self.retransmit, (request, response, resource, future_time))
-            self.call_id[key].start()
+            # self.call_id[key] = Timer(future_time, self.retransmit, (request, response, resource, future_time))
+            # self.call_id[key].start()
 
     def retransmit(self, t):
         """
@@ -411,8 +418,8 @@ class CoAP(socketserver.UDPServer):
             self.sent[key] = (response, time.time())
             self.send(response, host, port)
             future_time *= 2
-            self.call_id[key] = Timer(future_time, self.retransmit, (request, response, resource, future_time))
-            self.call_id[key].start()
+            # self.call_id[key] = Timer(future_time, self.retransmit, (request, response, resource, future_time))
+            # self.call_id[key].start()
         elif retransmit_count >= defines.MAX_RETRANSMIT and (not response.acknowledged and not response.rejected):
             print("Give up on Message " + str(response.mid))
             print("----------------------------------------")
