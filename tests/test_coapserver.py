@@ -1,4 +1,4 @@
-import random
+import random_test
 import socket
 import threading
 import unittest
@@ -21,7 +21,7 @@ class Tests(unittest.TestCase):
         self.server_thread = threading.Thread(target=self.server.serve_forever)
         self.server_thread.start()
         self.client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.current_mid = random.randint(1, 1000)
+        self.current_mid = random_test.randint(1, 1000)
 
     def tearDown(self):
         self.client.close()
