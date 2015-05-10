@@ -16,7 +16,7 @@ from coapthon.messages.response import Response
 from coapthon.resources.resource import Resource
 from coapthon.serializer import Serializer
 import concurrent.futures
-import logging
+# import logging
 from coapthon.utils import Tree
 
 __author__ = 'Giacomo Tanganelli'
@@ -31,6 +31,128 @@ if not os.path.exists(home + "/.coapthon/"):
 # # Now add an observer that logs to a file
 # application = Application("CoAPthon_Server")
 # application.setComponent(ILogObserver, FileLogObserver(logfile).emit)
+
+class CoAPHandler(SocketServer.BaseRequestHandler):
+    def __init__(self, request, client_address, server):
+        SocketServer.BaseRequestHandler.__init__(self, request, client_address, server)
+        self.client_socket = None
+
+    def handle(self):
+        """
+        Handler for received UDP datagram.
+
+        :param data: the UDP datagram
+        :param host: source host
+        :param port: source port
+        """
+        host = self.client_address[0]
+        port = self.client_address[1]
+
+        data = self.request[0].strip()
+        self.client_socket = self.request[1]
+
+        # log.msg("Datagram received from " + str(host) + ":" + str(port))
+        serializer = Serializer()
+        message = serializer.deserialize(data, host, port)
+        # print "Message received from " + host + ":" + str(port)
+        # print "----------------------------------------"
+        # print message
+        # print "----------------------------------------"
+        if isinstance(message, Request):
+            # log.msg("Received request")
+            ret = self.server.request_layer.handle_request(message)
+            if isinstance(ret, Request):
+                response = self.server.request_layer.process(ret)
+            else:
+                response = ret
+            self.schedule_retrasmission(message, response, None)
+            # log.msg("Send Response")
+            self.send(response, host, port)
+        elif isinstance(message, Response):
+            # log.err("Received response")
+            rst = Message.new_rst(message)
+            rst = self.server.message_layer.matcher_response(rst)
+            # log.msg("Send RST")
+            self.send(rst, host, port)
+        elif isinstance(message, tuple):
+            message, error = message
+            response = Response()
+            response.destination = (host, port)
+            response.code = defines.responses[error]
+            response = self.server.message_layer.reliability_response(message, response)
+            response = self.server.message_layer.matcher_response(response)
+            # log.msg("Send Error")
+            self.send(response, host, port)
+        elif message is not None:
+            # ACK or RST
+            # log.msg("Received ACK or RST")
+            self.server.message_layer.handle_message(message)
+
+    def send(self, message, host, port):
+        """
+        Send the message
+
+        :param message: the message to send
+        :param host: destination host
+        :param port: destination port
+        """
+        # print "Message send to " + host + ":" + str(port)
+        # print "----------------------------------------"
+        # print message
+        # print "----------------------------------------"
+        serializer = Serializer()
+        message = serializer.serialize(message)
+        self.client_socket.sendto(message, (host, port))
+
+    def schedule_retrasmission(self, request, response, resource):
+        """
+        Prepare retrasmission message and schedule it for the future.
+
+        :param request:  the request
+        :param response: the response
+        :param resource: the resource
+        """
+        host, port = response.destination
+        if response.type == defines.inv_types['CON']:
+            future_time = random.uniform(defines.ACK_TIMEOUT, (defines.ACK_TIMEOUT * defines.ACK_RANDOM_FACTOR))
+            key = hash(str(host) + str(port) + str(response.mid))
+            self.server.call_id[key] = self.server.executor.submit(self.retransmit, (request, response, resource,
+                                                                                     future_time))
+
+    def retransmit(self, t):
+        """
+        Retransmit the message and schedule retransmission for future if MAX_RETRANSMIT limit is not already reached.
+
+        :param t: ((Response, Resource), host, port, future_time) or (Response, host, port, future_time)
+        """
+        # log.msg("Retransmit")
+        request, response, resource, future_time = t
+        time.sleep(future_time)
+        host, port = response.destination
+
+        key = hash(str(host) + str(port) + str(response.mid))
+        t = self.server.call_id.get(key)
+        if t is None:
+            return
+        call_id, retransmit_count = t
+        if retransmit_count < defines.MAX_RETRANSMIT and (not response.acknowledged and not response.rejected):
+            retransmit_count += 1
+            self.server.sent[key] = (response, time.time())
+            self.send(response, host, port)
+            future_time *= 2
+            self.server.call_id[key] = self.server.executor.submit(self.retransmit, (request, response, resource,
+                                                                                     future_time))
+        elif retransmit_count >= defines.MAX_RETRANSMIT and (not response.acknowledged and not response.rejected):
+            print "Give up on Message " + str(response.mid)
+            print "----------------------------------------"
+        elif response.acknowledged:
+            response.timeouted = False
+            del self.server.call_id[key]
+        else:
+            response.timeouted = True
+            if resource is not None:
+                self.server.observe_layer.remove_observer(resource, request, response)
+            del self.server.call_id[key]
 
 
 class CoAP(SocketServer.UDPServer):
@@ -55,81 +177,20 @@ class CoAP(SocketServer.UDPServer):
         self.root = Tree()
         self.root["/"] = root
 
-        self.request_layer = RequestLayer(self)
-        self.blockwise_layer = BlockwiseLayer(self)
-        self.resource_layer = ResourceLayer(self)
-        self.message_layer = MessageLayer(self)
-        self.observe_layer = ObserveLayer(self)
         self.multicast = multicast
         self.executor_mid = threading.Timer(defines.EXCHANGE_LIFETIME, self.purge_mids)
         self.executor_mid.setDaemon(True)
         self.executor_mid.start()
 
-    def send(self, message, host, port):
-        """
-        Send the message
-
-        :param message: the message to send
-        :param host: destination host
-        :param port: destination port
-        """
-        # print "Message send to " + host + ":" + str(port)
-        # print "----------------------------------------"
-        # print message
-        # print "----------------------------------------"
-        serializer = Serializer()
-        message = serializer.serialize(message)
-        self.socket.sendto(message, (host, port))
+        self.request_layer = RequestLayer(self)
+        self.blockwise_layer = BlockwiseLayer(self)
+        self.resource_layer = ResourceLayer(self)
+        self.message_layer = MessageLayer(self)
+        self.observe_layer = ObserveLayer(self)
 
     def finish_request(self, request, client_address):
-        """
-        Handler for received UDP datagram.
-
-        :param data: the UDP datagram
-        :param host: source host
-        :param port: source port
-        """
-        host = client_address[0]
-        port = client_address[1]
-        data = request[0]
-        self.socket = request[1]
-
-        # log.msg("Datagram received from " + str(host) + ":" + str(port))
-        serializer = Serializer()
-        message = serializer.deserialize(data, host, port)
-        # print "Message received from " + host + ":" + str(port)
-        # print "----------------------------------------"
-        # print message
-        # print "----------------------------------------"
-        if isinstance(message, Request):
-            # log.msg("Received request")
-            ret = self.request_layer.handle_request(message)
-            if isinstance(ret, Request):
-                response = self.request_layer.process(ret)
-            else:
-                response = ret
-            self.schedule_retrasmission(message, response, None)
-            # log.msg("Send Response")
-            self.send(response, host, port)
-        elif isinstance(message, Response):
-            # log.err("Received response")
-            rst = Message.new_rst(message)
-            rst = self.message_layer.matcher_response(rst)
-            # log.msg("Send RST")
-            self.send(rst, host, port)
-        elif isinstance(message, tuple):
-            message, error = message
-            response = Response()
-            response.destination = (host, port)
-            response.code = defines.responses[error]
-            response = self.message_layer.reliability_response(message, response)
-            response = self.message_layer.matcher_response(response)
-            # log.msg("Send Error")
-            self.send(response, host, port)
-        elif message is not None:
-            # ACK or RST
-            # log.msg("Received ACK or RST")
-            self.message_layer.handle_message(message)
+        handler = CoAPHandler(request, client_address, self)
+        self.executor.submit(handler.handle)
 
     def purge_mids(self):
         """
@@ -156,8 +217,6 @@ class CoAP(SocketServer.UDPServer):
             for key in received_key_to_delete:
                 del self.received[key]
         print "Exit Purge MIDS"
-
-
 
     def add_resource(self, path, resource):
         """
@@ -275,54 +334,6 @@ class CoAP(SocketServer.UDPServer):
         resource, request, notification = self.observe_layer.prepare_notification_deletion(t)
         if notification is not None:
             self.executor.submit(self.observe_layer.send_notification, (resource, request, notification))
-
-    def schedule_retrasmission(self, request, response, resource):
-        """
-        Prepare retrasmission message and schedule it for the future.
-
-        :param request:  the request
-        :param response: the response
-        :param resource: the resource
-        """
-        host, port = response.destination
-        if response.type == defines.inv_types['CON']:
-            future_time = random.uniform(defines.ACK_TIMEOUT, (defines.ACK_TIMEOUT * defines.ACK_RANDOM_FACTOR))
-            key = hash(str(host) + str(port) + str(response.mid))
-            self.call_id[key] = self.executor.submit(self.retransmit, (request, response, resource, future_time))
-
-    def retransmit(self, t):
-        """
-        Retransmit the message and schedule retransmission for future if MAX_RETRANSMIT limit is not already reached.
-
-        :param t: ((Response, Resource), host, port, future_time) or (Response, host, port, future_time)
-        """
-        # log.msg("Retransmit")
-        request, response, resource, future_time = t
-        time.sleep(future_time)
-        host, port = response.destination
-
-        key = hash(str(host) + str(port) + str(response.mid))
-        t = self.call_id.get(key)
-        if t is None:
-            return
-        call_id, retransmit_count = t
-        if retransmit_count < defines.MAX_RETRANSMIT and (not response.acknowledged and not response.rejected):
-            retransmit_count += 1
-            self.sent[key] = (response, time.time())
-            self.send(response, host, port)
-            future_time *= 2
-            self.call_id[key] = self.executor.submit(self.retransmit, (request, response, resource, future_time))
-        elif retransmit_count >= defines.MAX_RETRANSMIT and (not response.acknowledged and not response.rejected):
-            print "Give up on Message " + str(response.mid)
-            print "----------------------------------------"
-        elif response.acknowledged:
-            response.timeouted = False
-            del self.call_id[key]
-        else:
-            response.timeouted = True
-            if resource is not None:
-                self.observe_layer.remove_observer(resource, request, response)
-            del self.call_id[key]
 
     @staticmethod
     def send_error(request, response, error):
