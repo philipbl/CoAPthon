@@ -1,5 +1,5 @@
 # from Bio import trie
-import SocketServer
+from gevent.server import DatagramServer
 import os
 import random
 import socket
@@ -34,17 +34,18 @@ if not os.path.exists(home + "/.coapthon/"):
 # application.setComponent(ILogObserver, FileLogObserver(logfile).emit)
 
 
-class CoAP(object):
-    def __init__(self, server_address, multicast=False):
+class CoAP(DatagramServer):
+    def __init__(self, *args, **kwargs):
         """
-        Initialize the CoAP protocol
+            Initialize the CoAP protocol
 
-        """
+            """
+        super(CoAP, self).__init__(*args, **kwargs)
+        multicast = False
         self.stop = False
-        host, port = server_address
-        ret = socket.getaddrinfo(host, port)
-        family, socktype, proto, canonname, sockaddr = ret[0]
-
+        # host, port = server_address
+        # ret = socket.getaddrinfo(host, port)
+        # family, socktype, proto, canonname, sockaddr = ret[0]
         self.stopped = threading.Event()
         self.stopped.clear()
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=10)
@@ -57,10 +58,8 @@ class CoAP(object):
         self._currentMID = random.randint(1, 1000)
         root = Resource('root', self, visible=False, observable=False, allow_children=True)
         root.path = '/'
-        # self.root = trie.trie()
         self.root = Tree()
         self.root["/"] = root
-
         self.request_layer = RequestLayer(self)
         self.blockwise_layer = BlockwiseLayer(self)
         self.resource_layer = ResourceLayer(self)
@@ -70,13 +69,13 @@ class CoAP(object):
         self.timer_mid = threading.Timer(defines.EXCHANGE_LIFETIME, self.purge_mids)
         self.timer_mid.setDaemon(True)
         self.timer_mid.start()
-        self.server_address = server_address
-        if len(sockaddr) == 4:
-            self._socket = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
-            self._socket.bind(self.server_address)
-        else:
-            self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            self._socket.bind(self.server_address)
+        # self.server_address = server_address
+        # if len(sockaddr) == 4:
+        #     self._socket = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
+        #     self._socket.bind(self.server_address)
+        # else:
+        #     self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        #     self._socket.bind(self.server_address)
 
     def send(self, message, host, port):
         """
@@ -93,18 +92,18 @@ class CoAP(object):
         serializer = Serializer()
         message = serializer.serialize(message)
 
-        self._socket.sendto(message, (host, port))
+        self.socket.sendto(message, (host, port))
 
-    def listen(self, timeout):
-        while not self.stop:
-            self._socket.settimeout(float(timeout))
-            try:
-                data, client_address = self._socket.recvfrom(4096)
-            except socket.timeout:
-                continue
-            future = self.executor_req.submit(self.finish_request, (data, client_address))
-            future.add_done_callback(self.done_callback)
-        self._socket.close()
+    # def listen(self, timeout):
+    #     while not self.stop:
+    #         self._socket.settimeout(float(timeout))
+    #         try:
+    #             data, client_address = self._socket.recvfrom(4096)
+    #         except socket.timeout:
+    #             continue
+    #         future = self.executor_req.submit(self.finish_request, (data, client_address))
+    #         future.add_done_callback(self.done_callback)
+    #     self._socket.close()
 
     def close(self):
         self.stop = True
@@ -113,7 +112,8 @@ class CoAP(object):
         message, host, port = future.result(timeout=10.0)
         self.send(message, host, port)
 
-    def finish_request(self, args):
+    # def finish_request(self, args):
+    def handle(self, data, client_address):
         """
         Handler for received UDP datagram.
 
@@ -121,7 +121,7 @@ class CoAP(object):
         :param host: source host
         :param port: source port
         """
-        data, client_address = args
+        # data, client_address = args
         host = client_address[0]
         port = client_address[1]
 
@@ -141,13 +141,13 @@ class CoAP(object):
                 response = ret
             self.schedule_retrasmission(message, response, None)
             # log.msg("Send Response")
-            return response, host, port
+            self.send(response, host, port)
         elif isinstance(message, Response):
             # log.err("Received response")
             rst = Message.new_rst(message)
             rst = self.message_layer.matcher_response(rst)
             # log.msg("Send RST")
-            return rst, host, port
+            self.send(rst, host, port)
         elif isinstance(message, tuple):
             message, error = message
             response = Response()
@@ -156,7 +156,7 @@ class CoAP(object):
             response = self.message_layer.reliability_response(message, response)
             response = self.message_layer.matcher_response(response)
             # log.msg("Send Error")
-            return response, host, port
+            self.send(response, host, port)
         elif message is not None:
             # ACK or RST
             # log.msg("Received ACK or RST")
@@ -188,8 +188,6 @@ class CoAP(object):
             for key in received_key_to_delete:
                 del self.received[key]
         print "Exit Purge MIDS"
-
-
 
     def add_resource(self, path, resource):
         """

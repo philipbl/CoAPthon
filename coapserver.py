@@ -7,7 +7,7 @@ from example_resources import Storage, Separate, BasicResource, Long, Big
 
 class CoAPServer(CoAP):
     def __init__(self, host, port, multicast=False):
-        CoAP.__init__(self, (host, port), multicast)
+        CoAP.__init__(self, host + ":" + str(port))
         self.add_resource('basic/', BasicResource())
         self.add_resource('storage/', Storage())
         self.add_resource('separate/', Separate())
@@ -39,16 +39,17 @@ def main(argv):
             port = int(arg)
 
     server = CoAPServer(ip, port)
-    try:
-        server.listen(timeout=10)
-    except KeyboardInterrupt:
-        print "Server Shutdown"
-        server.close()
-        server.stopped.set()
-        server.timer_mid.cancel()
-        server.executor_req.shutdown(False)
-        server.executor.shutdown(False)
-        print "Exiting..."
+    server.serve_forever()
+    # try:
+    #     server.listen(timeout=10)
+    # except KeyboardInterrupt:
+    #     print "Server Shutdown"
+    #     server.close()
+    #     server.stopped.set()
+    #     server.timer_mid.cancel()
+    #     server.executor_req.shutdown(False)
+    #     server.executor.shutdown(False)
+    #     print "Exiting..."
 
 
 if __name__ == "__main__":
