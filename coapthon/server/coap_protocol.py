@@ -110,9 +110,6 @@ class CoAP(DatagramServer):
     #         future.add_done_callback(self.done_callback)
     #     self._socket.close()
 
-    def close(self):
-        self.stop = True
-
     def done_callback(self, future):
         message, host, port = future.result(timeout=10.0)
         self.send(message, host, port)

@@ -21,7 +21,7 @@ class Tests(unittest.TestCase):
         self.server_address = ("127.0.0.1", 5683)
         self.current_mid = random.randint(1, 1000)
         self.server = CoAPServer("127.0.0.1", 5683)
-        self.server_thread = threading.Thread(target=self.server.listen, args=(10,))
+        self.server_thread = threading.Thread(target=self.server.serve_forever)
         self.server_thread.start()
 
     def tearDown(self):
