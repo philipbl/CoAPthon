@@ -53,7 +53,12 @@ class CoAP(SocketServer.UDPServer):
             self.address_family = socket.AF_INET
         self.stopped = threading.Event()
         self.stopped.clear()
+        self.stopped_mid = threading.Event()
+        self.stopped_mid.clear()
+        self.stopped_ack = threading.Event()
+        self.stopped_ack.clear()
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=10)
+        self.pending_futures = []
         self.received = {}
         self.sent = {}
         self.call_id = {}
@@ -72,9 +77,8 @@ class CoAP(SocketServer.UDPServer):
         self.message_layer = MessageLayer(self)
         self.observe_layer = ObserveLayer(self)
         self.multicast = multicast
-        self.executor_mid = threading.Timer(defines.EXCHANGE_LIFETIME, self.purge_mids)
-        self.executor_mid.setDaemon(True)
-        self.executor_mid.start()
+        self.timer_mid = threading.Timer(defines.EXCHANGE_LIFETIME, self.purge_mids)
+        self.timer_mid.start()
 
     def send(self, message, host, port):
         """
@@ -150,7 +154,7 @@ class CoAP(SocketServer.UDPServer):
 
         """
         # log.msg("Purge MIDs")
-        while not self.stopped.isSet():
+        while not self.stopped_mid.isSet():
             time.sleep(defines.EXCHANGE_LIFETIME)
             now = time.time()
             sent_key_to_delete = []
@@ -167,9 +171,10 @@ class CoAP(SocketServer.UDPServer):
                 del self.sent[key]
             for key in received_key_to_delete:
                 del self.received[key]
-        print "Exit Purge MIDS"
-
-
+            for future in self.pending_futures:
+                if future.done():
+                    self.pending_futures.remove(future)
+        print "Exit Purge MIDs"
 
     def add_resource(self, path, resource):
         """
@@ -250,7 +255,7 @@ class CoAP(SocketServer.UDPServer):
         commands = self.observe_layer.notify_deletion(resource)
         if commands is not None:
             for f, t in commands:
-                self.executor.submit(f, t)
+                self.pending_futures.append(self.executor.submit(f, t))
 
     def remove_observers(self, path):
         """
@@ -261,7 +266,7 @@ class CoAP(SocketServer.UDPServer):
         commands = self.observe_layer.remove_observers(path)
         if commands is not None:
             for f, t in commands:
-                self.executor.submit(f, t)
+                self.pending_futures.append(self.executor.submit(f, t))
 
     def prepare_notification(self, t):
         """
@@ -273,7 +278,8 @@ class CoAP(SocketServer.UDPServer):
         """
         resource, request, notification = self.observe_layer.prepare_notification(t)
         if notification is not None:
-            self.executor.submit(self.observe_layer.send_notification, (resource, request, notification))
+            self.pending_futures.append(self.executor.submit(self.observe_layer.send_notification,
+                                                             (resource, request, notification)))
 
     def prepare_notification_deletion(self, t):
         """
@@ -286,7 +292,8 @@ class CoAP(SocketServer.UDPServer):
         """
         resource, request, notification = self.observe_layer.prepare_notification_deletion(t)
         if notification is not None:
-            self.executor.submit(self.observe_layer.send_notification, (resource, request, notification))
+            self.pending_futures.append(self.executor.submit(self.observe_layer.send_notification,
+                                                             (resource, request, notification)))
 
     def schedule_retrasmission(self, request, response, resource):
         """
@@ -301,6 +308,7 @@ class CoAP(SocketServer.UDPServer):
             future_time = random.uniform(defines.ACK_TIMEOUT, (defines.ACK_TIMEOUT * defines.ACK_RANDOM_FACTOR))
             key = hash(str(host) + str(port) + str(response.mid))
             self.call_id[key] = self.executor.submit(self.retransmit, (request, response, resource, future_time))
+            self.pending_futures.append(self.call_id[key])
 
     def retransmit(self, t):
         """
@@ -324,6 +332,7 @@ class CoAP(SocketServer.UDPServer):
             self.send(response, host, port)
             future_time *= 2
             self.call_id[key] = self.executor.submit(self.retransmit, (request, response, resource, future_time))
+            self.pending_futures.append(self.call_id[key])
         elif retransmit_count >= defines.MAX_RETRANSMIT and (not response.acknowledged and not response.rejected):
             print "Give up on Message " + str(response.mid)
             print "----------------------------------------"
@@ -336,8 +345,7 @@ class CoAP(SocketServer.UDPServer):
                 self.observe_layer.remove_observer(resource, request, response)
             del self.call_id[key]
 
-    @staticmethod
-    def send_error(request, response, error):
+    def send_error(self, request, response, error):
         """
         Send error messages as NON.
 
@@ -346,7 +354,18 @@ class CoAP(SocketServer.UDPServer):
         :param error: the error type
         :return: the response
         """
+        if request.type == defines.inv_types['CON'] and not request.acknowledged:
+            return self.send_error_ack(request, response, error)
         response.type = defines.inv_types['NON']
+        response.code = defines.responses[error]
+        response.token = request.token
+        response.mid = self.current_mid
+        self.current_mid += 1
+        return response
+
+    @staticmethod
+    def send_error_ack(request, response, error):
+        response.type = defines.inv_types['ACK']
         response.code = defines.responses[error]
         response.token = request.token
         response.mid = request.mid

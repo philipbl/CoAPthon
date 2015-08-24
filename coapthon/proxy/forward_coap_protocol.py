@@ -1,9 +1,7 @@
 import copy
 import hashlib
 import random
-import re
-from concurrent.futures import ThreadPoolExecutor
-import time
+from threading import Timer
 from coapthon import defines
 from coapthon.client.coap_synchronous import HelperClientSynchronous
 from coapthon.messages.message import Message
@@ -29,10 +27,8 @@ class ProxyCoAP(CoAP):
         self.timer = {}
 
     def finish_request(self, request, client_address):
-        """
-        Handler for received UDP datagram.
 
-        """
+
         host = client_address[0]
         port = client_address[1]
         data = request[0]
@@ -146,7 +142,6 @@ class ProxyCoAP(CoAP):
         self._currentMID += 1
         client.starting_mid = self._currentMID % (1 << 16)
         method = defines.codes[request.code]
-
         if method == 'GET':
             function = client.get
             req = copy.deepcopy(request)

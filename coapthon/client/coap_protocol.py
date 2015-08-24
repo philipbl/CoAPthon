@@ -37,7 +37,6 @@ application.setComponent(ILogObserver, FileLogObserver(logfile).emit)
 
 class CoAP(DatagramProtocol):
     def __init__(self, server, forward):
-        # print "INIT CLIENT\n"
         self._forward = forward
         self.received = {}
         self.sent = {}

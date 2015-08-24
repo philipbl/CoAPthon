@@ -1,4 +1,5 @@
 from coapthon import defines
+from coapthon.utils import byte_len
 
 __author__ = 'Giacomo Tanganelli'
 __version__ = "2.0"
@@ -12,7 +13,6 @@ class BlockwiseLayer(object):
     def __init__(self, parent):
         """
         Initialize a Blockwise Layer.
-
         :type parent: coapserver.CoAP
         :param parent: the CoAP server
         """
@@ -21,7 +21,6 @@ class BlockwiseLayer(object):
     def handle_request(self, request):
         """
         Store Blockwise parameter required by clients
-
         :param request: the request message
         :return: M bit, request
         """
@@ -50,7 +49,6 @@ class BlockwiseLayer(object):
     def start_block2(self, request):
         """
         Initialize a blockwise response. Used if payload > 1024
-
         :param request: the request message
         """
         host, port = request.source
@@ -60,7 +58,6 @@ class BlockwiseLayer(object):
     def handle_response(self, key, response, resource):
         """
         Handle Blockwise in responses.
-
         :param key: key parameter to search inside the disctionary
         :param response: the response message
         :param resource: the request message
@@ -94,10 +91,27 @@ class BlockwiseLayer(object):
     def parse_blockwise(value):
         """
         Parse Blockwise option.
-
         :param value: option value
         :return: num, m, size
         """
-        length = value.length - 4
-        num, m, size = value.unpack("uint:" + str(length) + ", bin:1, uint:3")
+
+        length = byte_len(value)
+        if length == 1:
+            num = value & 0xF0
+            num >>= 4
+            m = value & 0x08
+            m >>= 3
+            size = value & 0x07
+        elif length == 2:
+            num = value & 0xFFF0
+            num >>= 4
+            m = value & 0x0008
+            m >>= 3
+            size = value & 0x0007
+        else:
+            num = value & 0xFFFFF0
+            num >>= 4
+            m = value & 0x000008
+            m >>= 3
+            size = value & 0x000007
         return num, int(m), size
