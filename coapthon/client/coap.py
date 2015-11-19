@@ -52,7 +52,11 @@ class CoAP(object):
         self._currentMID = c
 
     def send_message(self, message):
+        """
+        Sends the message.
 
+        :param message: the message to be sent
+        """
         if isinstance(message, Request):
             request = self._requestLayer.send_request(message)
             request = self._observeLayer.send_request(request)
@@ -130,11 +134,10 @@ class CoAP(object):
                 transaction = self._messageLayer.receive_empty(message)
 
     def _send_ack(self, transaction):
-        # Handle separate
         """
         Sends an ACK message for the request.
 
-        :param request: [request, sleep_time] or request
+        :param transaction: Transaction that owns the response to be acknowledged
         """
 
         ack = Message()

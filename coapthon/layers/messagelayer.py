@@ -45,7 +45,6 @@ class MessageLayer(object):
             return
         key_mid = hash(str(host) + str(port) + str(request.mid))
         key_token = hash(str(host) + str(port) + str(request.token))
-        transaction = None
         if key_mid in self._transactions.keys():
             # Duplicated
             self._transactions[key_mid].request.duplicated = True
@@ -191,7 +190,6 @@ class MessageLayer(object):
     def send_empty(self, transaction, related, message):
         """
 
-        :type transaction: Transaction
         :param transaction:
         :type message: Message
         :param message:

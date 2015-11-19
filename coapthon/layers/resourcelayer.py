@@ -12,7 +12,6 @@ class ResourceLayer(object):
         """
         Initialize a Resource Layer.
 
-        :type parent: CoAP
         :param parent: the CoAP server
         """
         self._parent = parent
