@@ -23,12 +23,13 @@ class Tests(unittest.TestCase):
         self.current_mid = random.randint(1, 1000)
         self.server_mid = random.randint(1000, 2000)
         self.server = CoAPServerPlugTest("127.0.0.1", 5683, starting_mid=self.server_mid)
-        self.server_thread = threading.Thread(target=self.server.listen, args=(10,))
+        self.server.allow_reuse_address = True
+        self.server_thread = threading.Thread(target=self.server.serve_forever)
         self.server_thread.start()
         self.queue = Queue()
 
     def tearDown(self):
-        self.server.close()
+        self.server.shutdown()
         self.server_thread.join(timeout=25)
         self.server = None
 

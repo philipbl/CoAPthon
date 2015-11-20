@@ -3,7 +3,7 @@ import logging
 import sys
 from plugtest_resources import TestResource, SeparateResource, ObservableResource, LargeResource, LargeUpdateResource, \
     LongResource
-from coapthon.server.coap import CoAP
+from coapthon.server.server import CoAP
 
 __author__ = 'giacomo'
 
@@ -64,10 +64,9 @@ def main(argv):
 
     server = CoAPServerPlugTest(ip, port)
     try:
-        server.listen(10)
+        server.serve_forever()
     except KeyboardInterrupt:
         print "Server Shutdown"
-        server.close()
         print "Exiting..."
 
 

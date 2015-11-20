@@ -1,7 +1,7 @@
 import getopt
 import logging
 import sys
-from coapthon.server.coap import CoAP
+from coapthon.server.server import CoAP
 from exampleresources import BasicResource, Long, Separate, Storage, Big, voidResource
 
 __author__ = 'giacomo'
@@ -43,10 +43,10 @@ def main(argv):
 
     server = CoAPServer(ip, port)
     try:
-        server.listen(10)
+        server.serve_forever()
     except KeyboardInterrupt:
         print "Server Shutdown"
-        server.close()
+        # server.close()
         print "Exiting..."
 
 

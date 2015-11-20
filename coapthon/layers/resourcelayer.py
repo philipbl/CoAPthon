@@ -211,7 +211,7 @@ class ResourceLayer(object):
     def _handle_separate(self, transaction, callback):
         # Handle separate
         if not transaction.request.acknowledged:
-            self._parent._send_ack(transaction)
+            self._parent.send_ack(transaction)
             transaction.request.acknowledged = True
         resource = callback(request=transaction.request)
         return resource
