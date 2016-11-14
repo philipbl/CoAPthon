@@ -1,4 +1,4 @@
-from Queue import Queue
+from queue import Queue
 import random
 import socket
 import threading
@@ -86,7 +86,7 @@ class Tests(unittest.TestCase):
         client.stop()
 
     def client_callback(self, response):
-        print "Callback"
+        print("Callback")
         self.queue.put(response)
 
     def _test_plugtest(self, message_list):  # pragma: no cover
@@ -150,7 +150,7 @@ class Tests(unittest.TestCase):
         sock.close()
 
     def test_not_allowed(self):
-        print "TEST_NOT_ALLOWED"
+        print("TEST_NOT_ALLOWED")
         path = "/void"
         req = Request()
         req.code = defines.Codes.GET.number
@@ -222,7 +222,7 @@ class Tests(unittest.TestCase):
         self._test_with_client([exchange1, exchange2, exchange3, exchange4])
 
     def test_separate(self):
-        print "TEST_SEPARATE"
+        print("TEST_SEPARATE")
         path = "/separate"
         req = Request()
         req.code = defines.Codes.GET.number
@@ -299,7 +299,7 @@ class Tests(unittest.TestCase):
         self._test_with_client([exchange1, exchange2, exchange3, exchange4])
 
     def test_post(self):
-        print "TEST_POST"
+        print("TEST_POST")
         path = "/storage/new_res?id=1"
         req = Request()
 
@@ -397,7 +397,7 @@ class Tests(unittest.TestCase):
         self._test_with_client([exchange1, exchange2, exchange3, exchange4, exchange5])
 
     def test_post_block(self):
-        print "TEST_POST_BLOCK"
+        print("TEST_POST_BLOCK")
         path = "/storage/new_res"
         req = Request()
 
@@ -532,7 +532,7 @@ class Tests(unittest.TestCase):
         self._test_plugtest([exchange1, exchange2, exchange3, exchange4, exchange5])
 
     def test_get_block(self):
-        print "TEST_GET_BLOCK"
+        print("TEST_GET_BLOCK")
         path = "/big"
 
         req = Request()
@@ -698,7 +698,7 @@ class Tests(unittest.TestCase):
         self._test_plugtest([exchange1, exchange2, exchange3, exchange4, exchange5, exchange6, exchange7, exchange8])
 
     def test_post_block_big(self):
-        print "TEST_POST_BLOCK_BIG"
+        print("TEST_POST_BLOCK_BIG")
         path = "/big"
         req = Request()
 
@@ -863,7 +863,7 @@ class Tests(unittest.TestCase):
         self._test_plugtest([exchange1, exchange2, exchange3, exchange4, exchange5, exchange6, exchange7])
 
     def test_options(self):
-        print "TEST_OPTIONS"
+        print("TEST_OPTIONS")
         path = "/storage/new_res"
 
         req = Request()
@@ -941,7 +941,7 @@ class Tests(unittest.TestCase):
         self._test_with_client([exchange1, exchange2, exchange3])
 
     def test_content_type(self):
-        print "TEST_CONTENT_TYPE"
+        print("TEST_CONTENT_TYPE")
         path = "/storage/new_res"
 
         req = Request()
@@ -1067,7 +1067,7 @@ class Tests(unittest.TestCase):
         expected.token = None
         expected.payload = "<value>0</value>"
 
-        print(expected.pretty_print())
+        print((expected.pretty_print()))
 
         exchange7 = (req, expected)
         self.current_mid += 1
@@ -1131,7 +1131,7 @@ class Tests(unittest.TestCase):
                                 exchange8, exchange9, exchange10])
 
     def test_ETAG(self):
-        print "TEST_ETAG"
+        print("TEST_ETAG")
         path = "/etag"
 
         req = Request()
@@ -1194,7 +1194,7 @@ class Tests(unittest.TestCase):
         self._test_with_client([exchange1, exchange2, exchange3])
 
     def test_child(self):
-        print "TEST_CHILD"
+        print("TEST_CHILD")
         path = "/child"
 
         req = Request()
@@ -1271,7 +1271,7 @@ class Tests(unittest.TestCase):
         self._test_with_client([exchange1, exchange2, exchange3, exchange4])
 
     def test_not_found(self):
-        print "TEST_not_found"
+        print("TEST_not_found")
         path = "/not_found"
 
         req = Request()
@@ -1347,7 +1347,7 @@ class Tests(unittest.TestCase):
         self._test_with_client([exchange1, exchange2, exchange3, exchange4])
 
     def test_invalid(self):
-        print "TEST_INVALID"
+        print("TEST_INVALID")
 
         # version
         req = ("\x00\x01\x8c\xda", self.server_address)
@@ -1402,7 +1402,7 @@ class Tests(unittest.TestCase):
         self._test_datagram([exchange1, exchange2, exchange3, exchange4, exchange5])
 
     def test_post_block_big_client(self):
-        print "TEST_POST_BLOCK_BIG_CLIENT"
+        print("TEST_POST_BLOCK_BIG_CLIENT")
         path = "/big"
         req = Request()
 
@@ -1448,7 +1448,7 @@ class Tests(unittest.TestCase):
         self._test_with_client([exchange1])
 
     def test_observe_client(self):
-        print "TEST_OBSERVE_CLIENT"
+        print("TEST_OBSERVE_CLIENT")
         path = "/basic"
 
         req = Request()

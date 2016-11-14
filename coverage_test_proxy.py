@@ -1,4 +1,4 @@
-from Queue import Queue
+from queue import Queue
 import random
 import socket
 import threading
@@ -92,7 +92,7 @@ class Tests(unittest.TestCase):
         client.stop()
 
     def client_callback(self, response):
-        print "Callback"
+        print("Callback")
         self.queue.put(response)
 
     def _test_plugtest(self, message_list):  # pragma: no cover
@@ -156,7 +156,7 @@ class Tests(unittest.TestCase):
         sock.close()
 
     def test_get_forward(self):
-        print "TEST_GET_FORWARD"
+        print("TEST_GET_FORWARD")
         path = "/basic"
         req = Request()
         req.code = defines.Codes.GET.number
@@ -257,7 +257,7 @@ class Tests(unittest.TestCase):
     #     self._test_with_client([exchange1, exchange2, exchange3, exchange4])
     #
     def test_post(self):
-        print "TEST_POST"
+        print("TEST_POST")
         path = "/storage/new_res?id=1"
         req = Request()
 
@@ -355,7 +355,7 @@ class Tests(unittest.TestCase):
         self._test_with_client([exchange1, exchange2, exchange3, exchange4, exchange5])
 
     def test_post_block(self):
-        print "TEST_POST_BLOCK"
+        print("TEST_POST_BLOCK")
         req = Request()
 
         req.code = defines.Codes.POST.number
@@ -489,7 +489,7 @@ class Tests(unittest.TestCase):
         self._test_plugtest([exchange1, exchange2, exchange3, exchange4, exchange5])
 
     def test_get_block(self):
-        print "TEST_GET_BLOCK"
+        print("TEST_GET_BLOCK")
 
         req = Request()
         req.code = defines.Codes.GET.number
@@ -654,7 +654,7 @@ class Tests(unittest.TestCase):
         self._test_plugtest([exchange1, exchange2, exchange3, exchange4, exchange5, exchange6, exchange7, exchange8])
 
     def test_post_block_big(self):
-        print "TEST_POST_BLOCK_BIG"
+        print("TEST_POST_BLOCK_BIG")
         req = Request()
 
         req.code = defines.Codes.POST.number
@@ -1247,7 +1247,7 @@ class Tests(unittest.TestCase):
     #     self._test_with_client([exchange1, exchange2, exchange3, exchange4])
     #
     def test_invalid(self):
-        print "TEST_INVALID"
+        print("TEST_INVALID")
 
         # version
         req = ("\x00\x01\x8c\xda", self.server_address)
@@ -1302,7 +1302,7 @@ class Tests(unittest.TestCase):
         self._test_datagram([exchange1, exchange2, exchange3, exchange4, exchange5])
 
     def test_post_block_big_client(self):
-        print "TEST_POST_BLOCK_BIG_CLIENT"
+        print("TEST_POST_BLOCK_BIG_CLIENT")
         req = Request()
 
         req.code = defines.Codes.POST.number
@@ -1347,7 +1347,7 @@ class Tests(unittest.TestCase):
         self._test_with_client([exchange1])
 
     def test_observe_client(self):
-        print "TEST_OBSERVE_CLIENT"
+        print("TEST_OBSERVE_CLIENT")
 
         req = Request()
         req.code = defines.Codes.GET.number
@@ -1371,7 +1371,7 @@ class Tests(unittest.TestCase):
         self._test_with_client_observe([exchange1])
 
     def test_duplicate(self):
-        print "TEST_DUPLICATE"
+        print("TEST_DUPLICATE")
         req = Request()
         req.code = defines.Codes.GET.number
         req.proxy_uri = "coap://127.0.0.1:5684/basic"
@@ -1389,7 +1389,7 @@ class Tests(unittest.TestCase):
         self._test_plugtest([(req, expected), (req, expected)])
 
     def test_duplicate_not_completed(self):
-        print "TEST_DUPLICATE_NOT_COMPLETED"
+        print("TEST_DUPLICATE_NOT_COMPLETED")
         req = Request()
         req.code = defines.Codes.GET.number
         req.proxy_uri = "coap://127.0.0.1:5684/long"

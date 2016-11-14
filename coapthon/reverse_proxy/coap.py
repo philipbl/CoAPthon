@@ -173,7 +173,7 @@ class CoAP(object):
 
                 self.receive_datagram((data, client_address))
             except RuntimeError:
-                print "Exception with Executor"
+                print("Exception with Executor")
         self._socket.close()
 
     def close(self):
@@ -243,9 +243,9 @@ class CoAP(object):
                 transaction = self._cacheLayer.receive_request(transaction)
 
                 if transaction.cacheHit is False:
-                    print transaction.request
+                    print(transaction.request)
                     transaction = self._forwardLayer.receive_request(transaction)
-                    print transaction.response
+                    print(transaction.response)
 
                 transaction = self._observeLayer.send_response(transaction)
 

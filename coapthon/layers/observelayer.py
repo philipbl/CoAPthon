@@ -125,7 +125,7 @@ class ObserveLayer(object):
             resource_list = root.with_prefix_resource(resource.path)
         else:
             resource_list = [resource]
-        for key in self._relations.keys():
+        for key in list(self._relations.keys()):
             if self._relations[key].transaction.resource in resource_list:
                 if self._relations[key].non_counter > defines.MAX_NON_NOTIFICATIONS \
                         or self._relations[key].transaction.request.type == defines.Types["CON"]:

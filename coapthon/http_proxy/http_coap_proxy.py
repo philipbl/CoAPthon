@@ -1,12 +1,12 @@
 import argparse
 
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from coapthon.client.helperclient import HelperClient
 from coapthon.utils import parse_uri
 from coapthon.defines import Codes, DEFAULT_HC_PATH, HC_PROXY_DEFAULT_PORT, COAP_DEFAULT_PORT, LOCALHOST, BAD_REQUEST, \
     NOT_IMPLEMENTED, CoAP_HTTP
 from coapthon.defines import COAP_PREFACE
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 __author__ = "Marco Ieni, Davide Foti"
 __email__ = "marcoieni94@gmail.com, davidefoti.uni@gmail.com"
@@ -44,7 +44,7 @@ class HCProxy:
     def run(self):
         server_address = (self.ip, self.hc_port)
         hc_proxy = HTTPServer(server_address, HCProxyHandler)
-        print 'Starting HTTP-CoAP Proxy...'
+        print('Starting HTTP-CoAP Proxy...')
         hc_proxy.serve_forever()  # the server listen to http://ip:hc_port/path
 
     @staticmethod
@@ -100,7 +100,7 @@ class HCProxyHandler(BaseHTTPRequestHandler):
         self.do_initial_operations()
         coap_response = self.client.get(self.coap_uri.path)
         self.client.stop()
-        print "Server response: ", coap_response.pretty_print()
+        print("Server response: ", coap_response.pretty_print())
         self.set_http_response(coap_response)
 
     def do_HEAD(self):
@@ -110,7 +110,7 @@ class HCProxyHandler(BaseHTTPRequestHandler):
         # with send_body=False we say that we do not need the body, because it is a HEAD request
         coap_response = self.client.get(self.coap_uri.path)
         self.client.stop()
-        print "Server response: ", coap_response.pretty_print()
+        print("Server response: ", coap_response.pretty_print())
         self.set_http_header(coap_response)
 
     def do_POST(self):
@@ -119,33 +119,33 @@ class HCProxyHandler(BaseHTTPRequestHandler):
         self.do_initial_operations()
         payload = self.coap_uri.get_payload()
         if payload is None:
-            print "BAD POST REQUEST"
+            print("BAD POST REQUEST")
             self.send_error(BAD_REQUEST)
             return
-        print payload
+        print(payload)
         coap_response = self.client.post(self.coap_uri.path, payload)
         self.client.stop()
-        print "Server response: ", coap_response.pretty_print()
+        print("Server response: ", coap_response.pretty_print())
         self.set_http_response(coap_response)
 
     def do_PUT(self):
         self.do_initial_operations()
         payload = self.coap_uri.get_payload()
         if payload is None:
-            print "BAD PUT REQUEST"
+            print("BAD PUT REQUEST")
             self.send_error(BAD_REQUEST)
             return
-        print payload
+        print(payload)
         coap_response = self.client.put(self.coap_uri.path, payload)
         self.client.stop()
-        print "Server response: ", coap_response.pretty_print()
+        print("Server response: ", coap_response.pretty_print())
         self.set_http_response(coap_response)
 
     def do_DELETE(self):
         self.do_initial_operations()
         coap_response = self.client.delete(self.coap_uri.path)
         self.client.stop()
-        print "Server response: ", coap_response.pretty_print()
+        print("Server response: ", coap_response.pretty_print())
         self.set_http_response(coap_response)
 
     def do_CONNECT(self):
@@ -164,19 +164,19 @@ class HCProxyHandler(BaseHTTPRequestHandler):
         """
         uri_path = self.path.split(COAP_PREFACE)
         request_hc_path = uri_path[0]
-        print "HCPATH: ", hc_path
+        print("HCPATH: ", hc_path)
         # print HC_PATH
-        print "URI: ", request_hc_path
+        print("URI: ", request_hc_path)
         if hc_path != request_hc_path:
             return False
         else:
             return True
 
     def set_http_header(self, coap_response):
-        print "Server: ", coap_response.source
-        print "codice risposta: ", coap_response.code
-        print "PROXED: ", CoAP_HTTP[Codes.LIST[coap_response.code].name]
-        print "payload risposta: ", coap_response.payload
+        print("Server: ", coap_response.source)
+        print("codice risposta: ", coap_response.code)
+        print("PROXED: ", CoAP_HTTP[Codes.LIST[coap_response.code].name])
+        print("payload risposta: ", coap_response.payload)
         self.send_response(int(CoAP_HTTP[Codes.LIST[coap_response.code].name]))
         self.send_header('Content-type', 'text/html')
         self.end_headers()

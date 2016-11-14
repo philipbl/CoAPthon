@@ -52,7 +52,7 @@ class Message(object):
         :param value: the type
         :raise AttributeError: if value is not a valid type
         """
-        if value not in defines.Types.values():
+        if value not in list(defines.Types.values()):
             raise AttributeError
         self._type = value
 
@@ -205,7 +205,7 @@ class Message(object):
         :param value: the code
         :raise AttributeError: if value is not a valid code
         """
-        if value not in defines.Codes.LIST.keys() and value is not None:
+        if value not in list(defines.Codes.LIST.keys()) and value is not None:
             raise AttributeError
         self._code = value
 
@@ -579,7 +579,7 @@ class Message(object):
 
     @property
     def line_print(self):
-        inv_types = {v: k for k, v in defines.Types.iteritems()}
+        inv_types = {v: k for k, v in defines.Types.items()}
 
         if self._code is None:
             self._code = defines.Codes.EMPTY.number
@@ -607,7 +607,7 @@ class Message(object):
         """
         msg = "Source: " + str(self._source) + "\n"
         msg += "Destination: " + str(self._destination) + "\n"
-        inv_types = {v: k for k, v in defines.Types.iteritems()}
+        inv_types = {v: k for k, v in defines.Types.items()}
         msg += "Type: " + str(inv_types[self._type]) + "\n"
         msg += "MID: " + str(self._mid) + "\n"
         if self._code is None:

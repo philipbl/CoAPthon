@@ -4,7 +4,7 @@ from coapthon import utils
 from coapthon.messages.response import *
 from coapthon.messages.request import *
 from coapthon.messages.message import Message
-from coaplrucache import CoapLRUCache
+from .coaplrucache import CoapLRUCache
 import time
 from cachetools.keys import hashkey
 
@@ -31,7 +31,7 @@ class Cache(object):
         :param response:
         :return:
         """
-        print "adding response to the cache"
+        print("adding response to the cache")
 
         """
         checking for valid code
@@ -40,7 +40,7 @@ class Cache(object):
         try:
             utils.check_code(code)
         except utils.InvalidResponseCode:
-            print "Invalid response code"
+            print("Invalid response code")
             return
 
         """
@@ -58,11 +58,11 @@ class Cache(object):
         else:
             new_key = ReverseCacheKey(request)
 
-        print "max age = ", response.max_age
+        print("max age = ", response.max_age)
         new_element = CacheElement(new_key, response, response.max_age)
 
         self.cache.update(new_key, new_element)
-        print "cache size = ", self.cache.debug_print()
+        print("cache size = ", self.cache.debug_print())
 
     def search_response(self, request):
         """
@@ -71,13 +71,13 @@ class Cache(object):
         :param request:
         :return CacheElement: returns None if there's a cache miss
         """
-        print "searching response"
+        print("searching response")
 
         if self.cache.is_empty() is True:
-            print "empty cache"
+            print("empty cache")
             return None
 
-        print "cache not empty"
+        print("cache not empty")
 
         """
         create a new cache key from the request
@@ -138,12 +138,12 @@ class CacheElement(object):
         self.creation_time = time.time()
 
     def debug_print(self):
-        print "freshness = ", self.freshness
-        print "key"
+        print("freshness = ", self.freshness)
+        print("key")
         self.key.debug_print()
-        print "response = ", self.cached_response
-        print "max age = ", self.max_age
-        print "creation time = ", self.creation_time
+        print("response = ", self.cached_response)
+        print("max age = ", self.max_age)
+        print("creation time = ", self.creation_time)
 
 """
 class for the key used to search elements in the cache (forward-proxy only)
@@ -156,7 +156,7 @@ class CacheKey(object):
 
         :param request:
         """
-        print "creating key"
+        print("creating key")
         self._payload = request.payload
         self._method = request.code
         """
@@ -176,11 +176,11 @@ class CacheKey(object):
         self.hashkey = (self._payload, self._method, option_str)
 
     def debug_print(self):
-        print "payload = ", self._payload
-        print "method = ", self._method
-        print "options = "
+        print("payload = ", self._payload)
+        print("method = ", self._method)
+        print("options = ")
         for option in self._options:
-            print option
+            print(option)
 
 """
 class for the key used to search elements in the cache (reverse-proxy only)
@@ -203,7 +203,7 @@ class ReverseCacheKey(object):
         self._options = []
         for option in request.options:
             if utils.check_nocachekey(option) is False:
-                print "appending"
+                print("appending")
                 self._options.append(option)
 
         """
@@ -214,8 +214,8 @@ class ReverseCacheKey(object):
         self.hashkey = (self._payload, self._method, option_str)
 
     def debug_print(self):
-        print "payload = ", self._payload
-        print "method = ", self._method
-        print "options = "
+        print("payload = ", self._payload)
+        print("method = ", self._method)
+        print("options = ")
         for option in self._options:
-            print option
+            print(option)

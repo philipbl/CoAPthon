@@ -55,7 +55,7 @@ class Tests(unittest.TestCase):
         sock.close()
 
     def test_retrasnmissions(self):
-        print "Retransmissions"
+        print("Retransmissions")
         path = "/separate"
         req = Request()
         req.code = defines.Codes.GET.number

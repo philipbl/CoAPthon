@@ -157,7 +157,7 @@ class CoAP(object):
                             self._observeLayer.receive_empty(message, transaction)
 
             except RuntimeError:
-                print "Exception with Executor"
+                print("Exception with Executor")
         self._socket.close()
 
     def close(self):

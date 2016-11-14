@@ -19,13 +19,13 @@ class MessageLayer(object):
             self._current_mid = random.randint(1, 1000)
 
     def purge(self):
-        for k in self._transactions.keys():
+        for k in list(self._transactions.keys()):
             now = time.time()
             transaction = self._transactions[k]
             if transaction.timestamp + defines.EXCHANGE_LIFETIME < now:
                 logger.debug("Delete transaction")
                 del self._transactions[k]
-        for k in self._transactions_token.keys():
+        for k in list(self._transactions_token.keys()):
             now = time.time()
             transaction = self._transactions_token[k]
             if transaction.timestamp + defines.EXCHANGE_LIFETIME < now:
@@ -47,7 +47,7 @@ class MessageLayer(object):
         key_mid = hash(str(host).lower() + str(port).lower() + str(request.mid).lower())
         key_token = hash(str(host).lower() + str(port).lower() + str(request.token).lower())
 
-        if key_mid in self._transactions.keys():
+        if key_mid in list(self._transactions.keys()):
             # Duplicated
             self._transactions[key_mid].request.duplicated = True
             transaction = self._transactions[key_mid]
@@ -75,11 +75,11 @@ class MessageLayer(object):
         key_mid_multicast = hash(str(defines.ALL_COAP_NODES).lower() + str(port).lower() + str(response.mid).lower())
         key_token = hash(str(host).lower() + str(port).lower() + str(response.token).lower())
         key_token_multicast = hash(str(defines.ALL_COAP_NODES).lower() + str(port).lower() + str(response.token).lower())
-        if key_mid in self._transactions.keys():
+        if key_mid in list(self._transactions.keys()):
             transaction = self._transactions[key_mid]
         elif key_token in self._transactions_token:
             transaction = self._transactions_token[key_token]
-        elif key_mid_multicast in self._transactions.keys():
+        elif key_mid_multicast in list(self._transactions.keys()):
             transaction = self._transactions[key_mid_multicast]
         elif key_token_multicast in self._transactions_token:
             transaction = self._transactions_token[key_token_multicast]
@@ -113,11 +113,11 @@ class MessageLayer(object):
         key_mid_multicast = hash(str(defines.ALL_COAP_NODES) + str(port) + str(message.mid))
         key_token = hash(str(host) + str(port) + str(message.token))
         key_token_multicast = hash(str(defines.ALL_COAP_NODES) + str(port) + str(message.token))
-        if key_mid in self._transactions.keys():
+        if key_mid in list(self._transactions.keys()):
             transaction = self._transactions[key_mid]
         elif key_token in self._transactions_token:
             transaction = self._transactions_token[key_token]
-        elif key_mid_multicast in self._transactions.keys():
+        elif key_mid_multicast in list(self._transactions.keys()):
             transaction = self._transactions[key_mid_multicast]
         elif key_token_multicast in self._transactions_token:
             transaction = self._transactions_token[key_token_multicast]

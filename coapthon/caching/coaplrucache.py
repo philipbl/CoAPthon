@@ -30,7 +30,7 @@ class CoapLRUCache(CoapCache):
         try:
             response = self.cache[key.hashkey]
         except KeyError:
-            print "problem here"
+            print("problem here")
             response = None
         return response
 
@@ -58,5 +58,5 @@ class CoapLRUCache(CoapCache):
 
         :return:
         """
-        print "size = ", self.cache.currsize
+        print("size = ", self.cache.currsize)
 

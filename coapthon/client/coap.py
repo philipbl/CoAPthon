@@ -156,7 +156,7 @@ class CoAP(object):
                 return
             else:  # pragma: no cover
                 if len(datagram) == 0:
-                    print 'orderly shutdown on server end'
+                    print('orderly shutdown on server end')
                     return
 
             serializer = Serializer()

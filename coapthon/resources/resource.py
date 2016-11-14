@@ -147,7 +147,7 @@ class Resource(object):
             if defines.Content_types["text/plain"] in self._payload:
                 return self._payload[defines.Content_types["text/plain"]]
             else:
-                val = self._payload.keys()
+                val = list(self._payload.keys())
                 return val[0], self._payload[val[0]]
 
     @payload.setter

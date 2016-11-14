@@ -97,7 +97,7 @@ class Request(Message):
 
     @accept.setter
     def accept(self, value):
-        if value in defines.Content_types.values():
+        if value in list(defines.Content_types.values()):
             option = Option()
             option.number = defines.OptionRegistry.ACCEPT.number
             option.value = value
