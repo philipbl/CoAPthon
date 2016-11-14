@@ -6,7 +6,6 @@ python:
 install:
 - pip install -r requirements.txt
 - pip install coveralls
-
 script:
 - coverage run plugtest.py
 - coverage run -a coverage_test.py
