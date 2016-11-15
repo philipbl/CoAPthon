@@ -137,7 +137,7 @@ class Serializer(object):
         values = [tmp, message.code, message.mid]
 
         if message.token is not None and tkl > 0:
-
+            print("Putting token", message.token, tkl, type(message.token))
             for b in str(message.token):
                 fmt += "c"
                 values.append(b)
@@ -145,7 +145,7 @@ class Serializer(object):
         options = Serializer.as_sorted_list(message.options)  # already sorted
         lastoptionnumber = 0
         for option in options:
-
+            print("Putting option")
             # write 4-bit option delta
             optiondelta = option.number - lastoptionnumber
             optiondeltanibble = Serializer.get_option_nibble(optiondelta)
@@ -178,15 +178,19 @@ class Serializer(object):
             if optionlength > 0:
                 opt_type = defines.OptionRegistry.LIST[option.number].value_type
                 if opt_type == defines.INTEGER:
+                    print("Writing option as integer")
                     words = Serializer.int_to_words(option.value, optionlength, 8)
                     for num in range(0, optionlength):
                         fmt += "B"
                         values.append(words[num])
                 elif opt_type == defines.STRING:
-                    for b in str(option.value):
-                        fmt += "c"
+                    print("Writing option value as string")
+                    print(option.value)
+                    for b in option.value:
+                        fmt += "B"
                         values.append(b)
                 else:
+                    print("Writing option value")
                     for b in option.value:
                         fmt += "B"
                         values.append(b)
@@ -298,7 +302,7 @@ class Serializer(object):
         :return: the sorted list
         """
         if len(options) > 0:
-            options.sort(None, key=lambda o: o.number)
+            options.sort(key=lambda o: o.number)
         return options
 
     @staticmethod
