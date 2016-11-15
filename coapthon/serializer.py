@@ -23,7 +23,7 @@ class Serializer(object):
             pos = 4
             length = len(datagram)
             while pos < length:
-                fmt += "c"
+                fmt += "B"
                 pos += 1
             s = struct.Struct(fmt)
             values = s.unpack_from(datagram)
@@ -55,8 +55,11 @@ class Serializer(object):
             pos += token_length
             current_option = 0
             length_packet = len(values)
+            print(values)
             while pos < length_packet:
-                next_byte = struct.unpack("B", values[pos])[0]
+                print(pos, values[pos])
+                # next_byte = struct.unpack("c", values[pos])[0]
+                next_byte = values[pos]
                 pos += 1
                 if next_byte != int(defines.PAYLOAD_MARKER):
                     # the first 4 bits of the byte represent the option delta
@@ -65,6 +68,9 @@ class Serializer(object):
                     # the second 4 bits represent the option length
                     # length = self._reader.read(4).uint
                     length = (next_byte & 0x0F)
+
+                    print("delta", delta)
+                    print("length", length)
                     num, pos = Serializer.read_option_value_from_nibble(delta, pos, values)
                     option_length, pos = Serializer.read_option_value_from_nibble(length, pos, values)
                     current_option += num
@@ -78,14 +84,16 @@ class Serializer(object):
                         value = None
                     elif option_item.value_type == defines.INTEGER:
                         tmp = values[pos: pos + option_length]
+                        print(tmp)
                         value = 0
                         for b in tmp:
                             value = (value << 8) | struct.unpack("B", b)[0]
                     else:
                         tmp = values[pos: pos + option_length]
+                        print(tmp)
                         value = ""
                         for b in tmp:
-                            value += str(b)
+                            value += chr(b)
 
                     pos += option_length
                     option = Option()
