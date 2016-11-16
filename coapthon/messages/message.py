@@ -100,11 +100,14 @@ class Message(object):
         :param value: the Token
         """
         # TODO check if longer that acceptable
-        if not isinstance(value, str):
-            value = str(value)
-        if len(value) > 256:
-            raise AttributeError
-        self._token = value
+        if value is None:
+           self._token = value
+        else:
+            if not isinstance(value, str):
+                value = str(value)
+            if len(value) > 256:
+                raise AttributeError
+            self._token = value
 
     @token.deleter
     def token(self):
@@ -584,9 +587,9 @@ class Message(object):
         if self._code is None:
             self._code = defines.Codes.EMPTY.number
 
-        msg = "From {source}, To {destination}, {type}-{mid}, {code}-{token}, ["\
+        msg = "From {source}, To {destination}, {type}-{mid}, {code}-{token} {token_type}, ["\
             .format(source=self._source, destination=self._destination, type=inv_types[self._type], mid=self._mid,
-                    code=defines.Codes.LIST[self._code].name, token=self._token)
+                    code=defines.Codes.LIST[self._code].name, token=self._token, token_type=type(self._token))
         for opt in self._options:
             msg += "{name}: {value}, ".format(name=opt.name, value=opt.value)
         msg += "]"

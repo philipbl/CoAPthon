@@ -118,6 +118,8 @@ class CoAP(object):
             try:
                 serializer = Serializer()
                 message = serializer.deserialize(data, client_address)
+                print("Received message: ", message)
+                print("Token: ", message.token)
                 if isinstance(message, int):
                     logger.error("receive_datagram - BAD REQUEST")
 
@@ -180,7 +182,7 @@ class CoAP(object):
         """
 
         with transaction:
-
+            print("Receive request 1 :", transaction.response)
             transaction.separate_timer = self._start_separate_timer(transaction)
 
             self._blockLayer.receive_request(transaction)
@@ -192,8 +194,11 @@ class CoAP(object):
                 return
 
             self._observeLayer.receive_request(transaction)
+            # print("Receive request 2:", transaction.response, transaction.response.token, type(transaction.response.token))
 
             self._requestLayer.receive_request(transaction)
+            print("Receive request 3:", transaction.response, transaction.response.token, type(transaction.response.token))
+
 
             if transaction.resource is not None and transaction.resource.changed:
                 self.notify(transaction.resource)
@@ -203,16 +208,20 @@ class CoAP(object):
                 transaction.resource.deleted = False
 
             self._observeLayer.send_response(transaction)
+            print("Receive request 4:", transaction.response, transaction.response.token, type(transaction.response.token))
 
             self._blockLayer.send_response(transaction)
+            print("Receive request 5:", transaction.response, transaction.response.token, type(transaction.response.token))
 
             self._stop_separate_timer(transaction.separate_timer)
 
             self._messageLayer.send_response(transaction)
+            print("Receive request 4:", transaction.response, transaction.response.token, type(transaction.response.token))
 
             if transaction.response is not None:
                 if transaction.response.type == defines.Types["CON"]:
                     self._start_retransmission(transaction, transaction.response)
+                print("Sending response: ", transaction.response.token, type(transaction.response.token))
                 self.send_datagram(transaction.response)
 
     def send_datagram(self, message):

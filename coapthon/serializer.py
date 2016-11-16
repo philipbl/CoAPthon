@@ -47,10 +47,13 @@ class Serializer(object):
             message.type = message_type
             message.mid = mid
             pos = 3
+            print("Token_length:", token_length)
             if token_length > 0:
                 message.token = "".join(values[pos: pos + token_length])
             else:
                 message.token = None
+
+            print("Just got token:", message.token, type(message.token))
 
             pos += token_length
             current_option = 0
@@ -111,6 +114,7 @@ class Serializer(object):
                     for b in payload:
                         message.payload += str(b)
                         pos += 1
+            print("Just deserailized:", message.token, type(message.token))
             return message
         except AttributeError:
             return defines.Codes.BAD_REQUEST.number
@@ -126,6 +130,7 @@ class Serializer(object):
         """
         fmt = "!BBH"
 
+        print("Token at the start: ", message.token, type(message.token))
         if message.token is None or message.token == "":
             tkl = 0
         else:
@@ -138,6 +143,7 @@ class Serializer(object):
 
         if message.token is not None and tkl > 0:
             print("Putting token", message.token, tkl, type(message.token))
+            raise Exception("I need the stack trace")
             for b in str(message.token):
                 fmt += "c"
                 values.append(b)
@@ -209,8 +215,8 @@ class Serializer(object):
             fmt += "B"
             values.append(defines.PAYLOAD_MARKER)
 
-            for b in str(payload):
-                fmt += "c"
+            for b in payload.encode('utf-8'):
+                fmt += "B"
                 values.append(b)
 
         datagram = None

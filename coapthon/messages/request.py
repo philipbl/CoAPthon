@@ -20,7 +20,7 @@ class Request(Message):
         value = []
         for option in self.options:
             if option.number == defines.OptionRegistry.URI_PATH.number:
-                value.append(str(option.value) + '/')
+                value.append(option.value.decode('utf-8') + '/')
         value = "".join(value)
         value = value[:-1]
         return value
