@@ -13,17 +13,10 @@ from coapthon.layers.requestlayer import RequestLayer
 from coapthon.messages.request import Request
 from coapthon.serializer import Serializer
 import os.path
-from coapthon.utils import create_logging
 
 __author__ = 'giacomo'
 
-
-if not os.path.isfile("logging.conf"):
-    create_logging()
-
 logger = logging.getLogger(__name__)
-logging.config.fileConfig("logging.conf", disable_existing_loggers=False)
-
 
 class CoAP(object):
     def __init__(self, server, starting_mid, callback):
