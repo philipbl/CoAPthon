@@ -1,15 +1,23 @@
 from distutils.core import setup
 
 setup(
-    name='CoAPthon',
-    version='4.0.0',
+    name='CoAPy',
+    version='4.0.1',
     packages=['coapthon', 'coapthon.layers', 'coapthon.client', 'coapthon.server', 'coapthon.messages',
               'coapthon.forward_proxy', 'coapthon.resources', 'coapthon.reverse_proxy'],
-    url='https://github.com/Tanganelli/CoAPthon',
+    url='https://github.com/philipbl/CoAPy',
     license='MIT License',
-    author='Giacomo Tanganelli',
-    author_email='giacomo.tanganelli@for.unipi.it',
-    description='CoAPthon is a python library to the CoAP protocol. ',
+    author='Philip Lundrigan',
+    author_email='philipbl@cs.utah.edu',
+    description='CoAPy is a python implementation for the CoAP protocol.',
     scripts=['coapserver.py', 'coapclient.py', 'exampleresources.py', 'coapforwardproxy.py', 'coapreverseproxy.py'],
-    requires=['sphinx']
+    requires=['sphinx'],
+    classifiers=[
+        "License :: OSI Approved :: MIT License",
+        "Development Status :: 4 - Beta",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 2.7",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+    ],
 )
