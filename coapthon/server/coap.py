@@ -58,13 +58,15 @@ class CoAP(object):
 
         if self.multicast:  # pragma: no cover
 
-            group_bin = socket.inet_pton(addrinfo[1], addrinfo[4][0])
+
             # Join group
             if addrinfo[0] == socket.AF_INET: # IPv4
+                group_bin = socket.inet_pton(socket.AF_INET, addrinfo[4][0])
                 mreq = group_bin + struct.pack('=I', socket.INADDR_ANY)
                 self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 self._socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
             else:
+                group_bin = socket.inet_pton(socket.AF_INET6, addrinfo[4][0])
                 mreq = group_bin + struct.pack('@I', 0)
                 self._socket = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
                 self._socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_JOIN_GROUP, mreq)
