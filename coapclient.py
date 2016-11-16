@@ -11,6 +11,10 @@ from coapthon.messages.message import Message
 from coapthon.messages.request import Request
 from coapthon.utils import parse_uri
 import socket
+import logging.config
+
+logging.config.fileConfig("logging.conf", disable_existing_loggers=False)
+
 
 client = None
 
@@ -115,7 +119,7 @@ def main():  # pragma: no cover
             usage()
             sys.exit(2)
         client.observe(path, client_callback_observe)
-        
+
     elif op == "DELETE":
         if path is None:
             print "Path cannot be empty for a DELETE request"

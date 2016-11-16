@@ -7,6 +7,9 @@ from coapthon.server.coap import CoAP
 from exampleresources import BasicResource, Long, Separate, Storage, Big, voidResource, XMLResource, ETAGResource, Child, \
     MultipleEncodingResource
 from plugtest_resources import ObservableResource
+import logging.config
+
+logging.config.fileConfig("logging.conf", disable_existing_loggers=False)
 
 __author__ = 'giacomo'
 
