@@ -19,10 +19,11 @@ __author__ = 'giacomo'
 logger = logging.getLogger(__name__)
 
 class CoAP(object):
-    def __init__(self, server, starting_mid, callback):
+    def __init__(self, server, starting_mid, receive_callback, timeout_callback):
         self._currentMID = starting_mid
         self._server = server
-        self._callback = callback
+        self._receive_callback = receive_callback
+        self._timeout_callback = timeout_callback
         self.stopped = threading.Event()
         self.to_be_stopped = []
 
@@ -129,6 +130,7 @@ class CoAP(object):
             else:
                 logger.warning("Give up on message {message}".format(message=message.line_print))
                 message.timeouted = True
+                self._timeout_callback(message)
 
             try:
                 self.to_be_stopped.remove(transaction.retransmit_stop)
@@ -183,9 +185,9 @@ class CoAP(object):
                     ack.type = defines.Types['ACK']
                     ack = self._messageLayer.send_empty(transaction, transaction.response, ack)
                     self.send_datagram(ack)
-                    self._callback(transaction.response)
+                    self._receive_callback(transaction.response)
                 else:
-                    self._callback(transaction.response)
+                    self._receive_callback(transaction.response)
             elif isinstance(message, Message):
                 self._messageLayer.receive_empty(message)
 
