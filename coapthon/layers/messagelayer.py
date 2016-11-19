@@ -75,6 +75,7 @@ class MessageLayer(object):
         key_mid_multicast = hash(str(defines.ALL_COAP_NODES).lower() + str(port).lower() + str(response.mid).lower())
         key_token = hash(str(host).lower() + str(port).lower() + str(response.token).lower())
         key_token_multicast = hash(str(defines.ALL_COAP_NODES).lower() + str(port).lower() + str(response.token).lower())
+
         if key_mid in list(self._transactions.keys()):
             transaction = self._transactions[key_mid]
         elif key_token in self._transactions_token:
@@ -163,10 +164,10 @@ class MessageLayer(object):
             transaction.request.mid = self._current_mid
             self._current_mid += 1 % 65535
 
-        key_mid = hash(str(host) + str(port) + str(request.mid))
+        key_mid = hash(str(host).lower() + str(port).lower() + str(request.mid).lower())
         self._transactions[key_mid] = transaction
 
-        key_token = hash(str(host) + str(port) + str(request.token))
+        key_token = hash(str(host).lower() + str(port).lower() + str(request.token).lower())
         self._transactions_token[key_token] = transaction
 
         return self._transactions[key_mid]
