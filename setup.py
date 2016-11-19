@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='CoAPy',
-    version='4.0.4',
+    version='4.1.0',
     packages=['coapthon', 'coapthon.layers', 'coapthon.client', 'coapthon.server', 'coapthon.messages',
               'coapthon.forward_proxy', 'coapthon.resources', 'coapthon.reverse_proxy'],
     url='https://github.com/Tanganelli/CoAPthon',

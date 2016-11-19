@@ -19,11 +19,11 @@ __author__ = 'giacomo'
 logger = logging.getLogger(__name__)
 
 class CoAP(object):
-    def __init__(self, server, starting_mid, receive_callback, timeout_callback):
+    def __init__(self, server, starting_mid, receive_callback, timeout_callback=None):
         self._currentMID = starting_mid
         self._server = server
         self._receive_callback = receive_callback
-        self._timeout_callback = timeout_callback
+        self._timeout_callback = timeout_callback or (lambda x: x)
         self.stopped = threading.Event()
         self.to_be_stopped = []
 
