@@ -134,8 +134,6 @@ class CoAP(object):
         """
         data, client_address = args
 
-        print("receiving datagram")
-
         serializer = Serializer()
         message = serializer.deserialize(data, client_address)
         if isinstance(message, int):
@@ -184,9 +182,7 @@ class CoAP(object):
                 transaction = self._cacheLayer.receive_request(transaction)
 
                 if transaction.cacheHit is False:
-                    print(transaction.request)
                     transaction = self._forwardLayer.receive_request(transaction)
-                    print(transaction.response)
 
                 transaction = self._observeLayer.send_response(transaction)
 
