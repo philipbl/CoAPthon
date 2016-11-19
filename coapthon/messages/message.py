@@ -103,10 +103,10 @@ class Message(object):
         if value is None:
            self._token = value
         else:
-            if not isinstance(value, str):
-                value = str(value)
-            if len(value) > 256:
-                raise AttributeError
+            # if not isinstance(value, str):
+            #     value = str(value)
+            # if len(value) > 256:
+            #     raise AttributeError
             self._token = value
 
     @token.deleter

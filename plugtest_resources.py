@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class TestResource(Resource):
     def __init__(self, name="TestResource", coap_server=None):
         super(TestResource, self).__init__(name, coap_server, visible=True, observable=False, allow_children=True)
-        self.payload = "Test Resource"
+        self.payload = "Test Resource".encode('utf-8')
         self.resource_type = "Type1"
         self.maximum_size_estimated = len(self.payload)
 
@@ -51,7 +51,7 @@ class SeparateResource(Resource):
 
     def __init__(self, name="Separate", coap_server=None):
         super(SeparateResource, self).__init__(name, coap_server, visible=True, observable=False, allow_children=False)
-        self.payload = "Separate Resource"
+        self.payload = "Separate Resource".encode('utf-8')
         self.interface_type = "separate"
         self.add_content_type("text/plain")
 
@@ -67,7 +67,7 @@ class ObservableResource(Resource):
 
     def __init__(self, name="Obs", coap_server=None):
         super(ObservableResource, self).__init__(name, coap_server, visible=True, observable=True, allow_children=False)
-        self.payload = "Observable Resource"
+        self.payload = "Observable Resource".encode('utf-8')
         self.period = 5
         self.update(True)
 
@@ -79,7 +79,7 @@ class ObservableResource(Resource):
         return self
 
     def update(self, first=False):
-        self.payload = str(datetime.datetime.now())
+        self.payload = b"Observable Resource"
         if not self._coap_server.stopped.isSet():
 
             timer = threading.Timer(self.period, self.update)
@@ -117,7 +117,7 @@ of a figure, no two parts of which were of one precise shade—owing I suppose t
 unmethodically in sun and shade, his shirt sleeves irregularly rolled up at various times—this same arm of his,
 I say, looked for all the world like a strip of that same patchwork quilt. Indeed, partly lying on it as the arm did
  when I first awoke, I could hardly tell it from the quilt, they so blended their hues together; and it was only by
- the sense of weight and pressure that I could tell that Queequeg was hugging"""
+ the sense of weight and pressure that I could tell that Queequeg was hugging""".encode('utf-8')
 
     def render_GET(self, request):
         return self

@@ -41,15 +41,10 @@ class RequestLayer(object):
         :param transaction:
         :rtype : Transaction
         """
-        print("Handling GET")
-        path = str("/" + transaction.request.uri_path)
+        path = "/" + transaction.request.uri_path
         transaction.response = Response()
         transaction.response.destination = transaction.request.source
         transaction.response.token = transaction.request.token
-        print("Request token:", transaction.request.token, type(transaction.request.token))
-        print("response token:", transaction.response.token, type(transaction.response.token))
-        print("path vs discovery")
-        print(path, defines.DISCOVERY_URL)
         if path == defines.DISCOVERY_URL:
             transaction = self._server.resourceLayer.discover(transaction)
         else:
@@ -72,7 +67,7 @@ class RequestLayer(object):
         :param transaction:
         :rtype : Transaction
         """
-        path = str("/" + transaction.request.uri_path)
+        path = "/" + transaction.request.uri_path
         transaction.response = Response()
         transaction.response.destination = transaction.request.source
         transaction.response.token = transaction.request.token
@@ -95,7 +90,7 @@ class RequestLayer(object):
         :param transaction:
         :rtype : Transaction
         """
-        path = str("/" + transaction.request.uri_path)
+        path = "/" + transaction.request.uri_path
         transaction.response = Response()
         transaction.response.destination = transaction.request.source
         transaction.response.token = transaction.request.token
@@ -111,7 +106,7 @@ class RequestLayer(object):
         :param transaction:
         :rtype : Transaction
         """
-        path = str("/" + transaction.request.uri_path)
+        path = "/" + transaction.request.uri_path
         transaction.response = Response()
         transaction.response.destination = transaction.request.source
         transaction.response.token = transaction.request.token

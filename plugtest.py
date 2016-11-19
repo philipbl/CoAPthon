@@ -138,7 +138,7 @@ class Tests(unittest.TestCase):
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
         expected.content_type = defines.Content_types["application/link-format"]
-        expected.payload = """</separate>;ct=0;if="separate",</large-update>;</seg1/seg2/seg3>;rt="Type1";sz="13",</large>;</seg1/seg2>;rt="Type1";sz="13",</test>;rt="Type1";sz="13",</obs>;</long>;</seg1>;rt="Type1";sz="13",</query>;rt="Type1";sz="13","""
+        expected.payload = b"""</large>;</large-update>;</long>;</obs>;</query>;rt="Type1";sz="13",</seg1>;rt="Type1";sz="13",</seg1/seg2>;rt="Type1";sz="13",</seg1/seg2/seg3>;rt="Type1";sz="13",</separate>;ct=0;if="separate",</test>;rt="Type1";sz="13","""
 
         self.current_mid += 1
         self._test_with_client([(req, expected)])
@@ -160,7 +160,7 @@ class Tests(unittest.TestCase):
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
         expected.content_type = defines.Content_types["application/link-format"]
-        expected.payload = """</seg1/seg2/seg3>;rt="Type1";sz="13",</seg1/seg2>;rt="Type1";sz="13",</test>;rt="Type1";sz="13",</seg1>;rt="Type1";sz="13",</query>;rt="Type1";sz="13","""
+        expected.payload = b"""</query>;rt="Type1";sz="13",</seg1>;rt="Type1";sz="13",</seg1/seg2>;rt="Type1";sz="13",</seg1/seg2/seg3>;rt="Type1";sz="13",</test>;rt="Type1";sz="13","""
 
         self.current_mid += 1
         self._test_with_client([(req, expected)])
@@ -180,7 +180,7 @@ class Tests(unittest.TestCase):
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = "Test Resource"
+        expected.payload = "Test Resource".encode('utf-8')
 
         self.current_mid += 1
         self._test_with_client([(req, expected)])
@@ -196,7 +196,7 @@ class Tests(unittest.TestCase):
         req.content_type = defines.Content_types["application/xml"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.payload = "<value>test</value>"
+        req.payload = "<value>test</value>".encode('utf-8')
 
         expected = Response()
         expected.type = defines.Types["ACK"]
@@ -220,7 +220,7 @@ class Tests(unittest.TestCase):
         req.content_type = defines.Content_types["application/xml"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.payload = "<value>test</value>"
+        req.payload = "<value>test</value>".encode('utf-8')
 
         expected = Response()
         expected.type = defines.Types["ACK"]
@@ -245,7 +245,7 @@ class Tests(unittest.TestCase):
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = "Test Resource"
+        expected.payload = "Test Resource".encode('utf-8')
 
         self.current_mid += 1
         exchange2 = (req, expected)
@@ -264,7 +264,7 @@ class Tests(unittest.TestCase):
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = "<value>test</value>"
+        expected.payload = "<value>test</value>".encode('utf-8')
         expected.content_type = defines.Content_types["application/xml"]
 
         self.current_mid += 1
@@ -308,7 +308,7 @@ class Tests(unittest.TestCase):
         expected._mid = None
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = "Test Resource"
+        expected.payload = "Test Resource".encode('utf-8')
 
         self.current_mid += 1
         self._test_with_client([(req, expected)])
@@ -324,7 +324,7 @@ class Tests(unittest.TestCase):
         req.content_type = defines.Content_types["application/xml"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.payload = "<value>test</value>"
+        req.payload = "<value>test</value>".encode('utf-8')
 
         expected = Response()
         expected.type = defines.Types["NON"]
@@ -348,7 +348,7 @@ class Tests(unittest.TestCase):
         req.content_type = defines.Content_types["application/xml"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.payload = "<value>test</value>"
+        req.payload = "<value>test</value>".encode('utf-8')
 
         expected = Response()
         expected.type = defines.Types["NON"]
@@ -404,7 +404,7 @@ class Tests(unittest.TestCase):
         expected2._mid = self.server_mid
         expected2.code = defines.Codes.CONTENT.number
         expected2.token = None
-        expected2.payload = "Separate Resource"
+        expected2.payload = "Separate Resource".encode('utf-8')
 
         self.current_mid += 1
         self._test_plugtest([(req, expected), (None, expected2)])
@@ -419,15 +419,15 @@ class Tests(unittest.TestCase):
         req.type = defines.Types["CON"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.token = "ciao"
+        req.token = b"ciao"
 
         expected = Response()
         expected.type = defines.Types["ACK"]
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = "Test Resource"
-        expected.token = "ciao"
+        expected.payload = "Test Resource".encode('utf-8')
+        expected.token = b"ciao"
 
         self.current_mid += 1
         self._test_with_client([(req, expected)])
@@ -447,7 +447,7 @@ class Tests(unittest.TestCase):
         expected.type = defines.Types["ACK"]
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
-        expected.payload = "Test Resource"
+        expected.payload = "Test Resource".encode('utf-8')
 
         self.current_mid += 1
         self._test_with_client([(req, expected)])
@@ -468,7 +468,7 @@ class Tests(unittest.TestCase):
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = "Test Resource"
+        expected.payload = b"Test Resource"
 
         self.current_mid += 1
         self._test_with_client([(req, expected)])
@@ -490,7 +490,7 @@ class Tests(unittest.TestCase):
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = "Observable Resource"
+        expected.payload = b"Observable Resource"
         expected.observe = 1
 
         expected2 = Response()
@@ -498,7 +498,7 @@ class Tests(unittest.TestCase):
         expected2._mid = self.server_mid
         expected2.code = defines.Codes.CONTENT.number
         expected2.token = None
-        expected2.payload = "Observable Resource"
+        expected2.payload = b"Observable Resource"
         expected2.observe = 1
 
         self.current_mid += 1
@@ -522,7 +522,7 @@ class Tests(unittest.TestCase):
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = "Observable Resource"
+        expected.payload = b"Observable Resource"
         expected.observe = 1
 
         self.current_mid += 1
@@ -532,7 +532,7 @@ class Tests(unittest.TestCase):
         expected2._mid = self.server_mid
         expected2.code = defines.Codes.CONTENT.number
         expected2.token = None
-        expected2.payload = "Observable Resource"
+        expected2.payload = b"Observable Resource"
         expected2.observe = 1
 
         rst = Response()
@@ -630,7 +630,7 @@ of a figure, no two parts of which were of one precise shade—owing I suppose t
 unmethodically in sun and shade, his shirt sleeves irregularly rolled up at various times—this same arm of his,
 I say, looked for all the world like a strip of that same patchwork quilt. Indeed, partly lying on it as the arm did
  when I first awoke, I could hardly tell it from the quilt, they so blended their hues together; and it was only by
- the sense of weight and pressure that I could tell that Queequeg was hugging"""
+ the sense of weight and pressure that I could tell that Queequeg was hugging""".encode('utf8')
         expected.block2 = (1, 0, 1024)
 
         exchange1 = (req, expected)
@@ -675,7 +675,7 @@ of a figure, no two parts of which were of one precise shade—owing I suppose t
 unmethodically in sun and shade, his shirt sleeves irregularly rolled up at various times—this same arm of his,
 I say, looked for all the world like a strip of that same patchwork quilt. Indeed, partly lying on it as the arm did
  when I first awoke, I could hardly tell it from the quilt, they so blended their hues together; and it was only by
- the sense of weight and pressure that I could tell that Queequeg was hugging"""
+ the sense of weight and pressure that I could tell that Queequeg was hugging""".encode('utf-8')
         expected.block2 = (1, 0, 1024)
 
         exchange1 = (req, expected)
@@ -739,7 +739,7 @@ I say, looked for all the world like a strip of that same patchwork quilt. Indee
         req.type = defines.Types["CON"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.payload = """"Me sabbee plenty"—grunted Queequeg, puffing away at his pipe """
+        req.payload = """"Me sabbee plenty"—grunted Queequeg, puffing away at his pipe """.encode('utf-8')
         req.block1 = (0, 1, 64)
 
         expected = Response()
@@ -760,7 +760,7 @@ I say, looked for all the world like a strip of that same patchwork quilt. Indee
         req.type = defines.Types["CON"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.payload = """and sitting up in bed. "You gettee in," he added, motioning"""
+        req.payload = """and sitting up in bed. "You gettee in," he added, motioning""".encode('utf-8')
         req.block1 = (1, 0, 64)
 
         expected = Response()
@@ -786,7 +786,7 @@ I say, looked for all the world like a strip of that same patchwork quilt. Indee
         expected._mid = self.current_mid
         expected.code = defines.Codes.CONTENT.number
         expected.token = None
-        expected.payload = """"Me sabbee plenty"—grunted Queequeg, puffing away at his pipe and sitting up in bed. "You gettee in," he added, motioning"""
+        expected.payload = """"Me sabbee plenty"—grunted Queequeg, puffing away at his pipe and sitting up in bed. "You gettee in," he added, motioning""".encode('utf-8')
 
         exchange3 = (req, expected)
         self.current_mid += 1
@@ -872,7 +872,7 @@ I say, looked for all the world like a strip of that same patchwork quilt. Indee
         req.type = defines.Types["CON"]
         req._mid = self.current_mid
         req.destination = self.server_address
-        req.payload = "<value>test</value>"
+        req.payload = "<value>test</value>".encode('utf-8')
 
         expected = Response()
         expected.type = defines.Types["ACK"]

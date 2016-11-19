@@ -248,7 +248,7 @@ class BlockLayer(object):
             host, port = request.destination
             key_token = hash(str(host) + str(port) + str(request.token))
             num, m, size = request.block2
-            item = BlockItem(size, num, m, size, "", None)
+            item = BlockItem(size, num, m, size, b"", None)
             self._block2_sent[key_token] = item
             return request
         return request

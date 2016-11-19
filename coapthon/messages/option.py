@@ -46,7 +46,7 @@ class Option(object):
         :param value:
         """
         if type(value) is str:
-            value = bytearray(value, "utf-8")
+            value = value
         elif type(value) is int and byte_len(value) != 0:
             value = value
         elif type(value) is int and byte_len(value) == 0:

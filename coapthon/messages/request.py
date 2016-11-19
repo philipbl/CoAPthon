@@ -20,7 +20,12 @@ class Request(Message):
         value = []
         for option in self.options:
             if option.number == defines.OptionRegistry.URI_PATH.number:
-                value.append(option.value.decode('utf-8') + '/')
+                if isinstance(option.value, bytes):
+                    option_value = option.value.decode('utf-8')
+                else:
+                    option_value = option.value
+
+                value.append(option_value + '/')
         value = "".join(value)
         value = value[:-1]
         return value
@@ -60,7 +65,11 @@ class Request(Message):
         value = []
         for option in self.options:
             if option.number == defines.OptionRegistry.URI_QUERY.number:
-                value.append(str(option.value))
+                if isinstance(option.value, bytes):
+                    option_value = option.value.decode('utf-8')
+                else:
+                    option_value = option.value
+                value.append(option_value)
         return "&".join(value)
 
     @uri_query.setter
@@ -75,7 +84,7 @@ class Request(Message):
         for q in queries:
             option = Option()
             option.number = defines.OptionRegistry.URI_QUERY.number
-            option.value = str(q)
+            option.value = q.encode('utf-8')
             self.add_option(option)
 
     @uri_query.deleter
@@ -179,7 +188,7 @@ class Request(Message):
         """
         option = Option()
         option.number = defines.OptionRegistry.PROXY_URI.number
-        option.value = str(value)
+        option.value = value
         self.add_option(option)
 
     @proxy_uri.deleter

@@ -151,7 +151,7 @@ class Tree(object):
 
         :return: registered resources.
         """
-        return list(self.tree.keys())
+        return list(sorted(self.tree.keys()))
 
     def with_prefix(self, path):
         ret = []

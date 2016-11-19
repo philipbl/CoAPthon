@@ -331,7 +331,7 @@ class ResourceLayer(object):
                 if ret:
                     payload += self.corelinkformat(resource)
 
-        transaction.response.payload = payload
+        transaction.response.payload = payload.encode('utf-8')
         transaction.response.content_type = defines.Content_types["application/link-format"]
         return transaction
 
@@ -363,7 +363,7 @@ class ResourceLayer(object):
         """
         msg = "<" + resource.path + ">;"
         assert(isinstance(resource, Resource))
-        for k in resource.attributes:
+        for k in sorted(resource.attributes):
             method = getattr(resource, defines.corelinkformat[k], None)
             if method is not None and method != "":
                 v = method
