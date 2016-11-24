@@ -91,6 +91,12 @@ class MessageLayer(object):
         if response.type == defines.Types["CON"]:
             send_ack = True
 
+        if transaction.completed:
+            # The transaction has already been completed so this means that the
+            # received packet is a duplicate
+            logger.warning("Received duplicate response -- ignoring")
+            return None, False
+
         transaction.request.acknowledged = True
         transaction.completed = True
         transaction.response = response
