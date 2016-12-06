@@ -78,12 +78,16 @@ class MessageLayer(object):
 
         if key_mid in list(self._transactions.keys()):
             transaction = self._transactions[key_mid]
+            multicast_transaction = False
         elif key_token in self._transactions_token:
             transaction = self._transactions_token[key_token]
+            multicast_transaction = False
         elif key_mid_multicast in list(self._transactions.keys()):
             transaction = self._transactions[key_mid_multicast]
+            multicast_transaction = True
         elif key_token_multicast in self._transactions_token:
             transaction = self._transactions_token[key_token_multicast]
+            multicast_transaction = True
         else:
             logger.warning("Un-Matched incoming response message " + str(host) + ":" + str(port))
             return None, False
@@ -91,7 +95,7 @@ class MessageLayer(object):
         if response.type == defines.Types["CON"]:
             send_ack = True
 
-        if transaction.completed:
+        if transaction.completed and not multicast_transaction:
             # The transaction has already been completed so this means that the
             # received packet is a duplicate
             logger.warning("Received duplicate response -- ignoring")
