@@ -172,7 +172,7 @@ class MessageLayer(object):
 
         if transaction.request.mid is None:
             transaction.request.mid = self._current_mid
-            self._current_mid += 1 % 65535
+            self._current_mid = (self._current_mid + 1) % 65535
 
         key_mid = hash(str(host).lower() + str(port).lower() + str(request.mid).lower())
         self._transactions[key_mid] = transaction
@@ -202,7 +202,7 @@ class MessageLayer(object):
 
         if transaction.response.mid is None:
             transaction.response.mid = self._current_mid
-            self._current_mid += 1 % 65535
+            self._current_mid = (self._current_mid + 1) % 65535
             try:
                 host, port = transaction.response.destination
             except AttributeError:

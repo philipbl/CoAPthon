@@ -122,7 +122,7 @@ class CoAP(object):
                     rst.type = defines.Types["RST"]
                     rst.code = message
                     rst.mid = self._messageLayer._current_mid
-                    self._messageLayer._current_mid += 1 % 65535
+                    self._messageLayer._current_mid = (self._messageLayer._current_mid + 1) % 65535
                     self.send_datagram(rst)
                     continue
 
