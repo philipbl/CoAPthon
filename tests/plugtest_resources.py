@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 class TestResource(Resource):
-    def __init__(self, name="TestResource", coap_server=None):
-        super(TestResource, self).__init__(name, coap_server, visible=True, observable=False, allow_children=True)
+    def __init__(self):
+        super(TestResource, self).__init__(visible=True, observable=False, allow_children=True)
         self.payload = "Test Resource".encode('utf-8')
         self.resource_type = "Type1"
         self.maximum_size_estimated = len(self.payload)
@@ -49,8 +49,8 @@ class TestResource(Resource):
 
 class SeparateResource(Resource):
 
-    def __init__(self, name="Separate", coap_server=None):
-        super(SeparateResource, self).__init__(name, coap_server, visible=True, observable=False, allow_children=False)
+    def __init__(self):
+        super(SeparateResource, self).__init__(visible=True, observable=False, allow_children=False)
         self.payload = "Separate Resource".encode('utf-8')
         self.interface_type = "separate"
         self.add_content_type("text/plain")
@@ -65,8 +65,8 @@ class SeparateResource(Resource):
 
 class ObservableResource(Resource):
 
-    def __init__(self, name="Obs", coap_server=None):
-        super(ObservableResource, self).__init__(name, coap_server, visible=True, observable=True, allow_children=False)
+    def __init__(self, coap_server):
+        super(ObservableResource, self).__init__(coap_server, visible=True, observable=True, allow_children=False)
         self.payload = "Observable Resource".encode('utf-8')
         self.period = 5
         self.update(True)
@@ -94,8 +94,8 @@ class ObservableResource(Resource):
 
 class LargeResource(Resource):
 
-    def __init__(self, name="Large", coap_server=None):
-        super(LargeResource, self).__init__(name, coap_server, visible=True, observable=False, allow_children=False)
+    def __init__(self, coap_server):
+        super(LargeResource, self).__init__(coap_server, visible=True, observable=False, allow_children=False)
         # 2000 bytes
         self.payload = """"Me sabbee plenty"—grunted Queequeg, puffing away at his pipe and sitting up in bed.
 "You gettee in," he added, motioning to me with his tomahawk, and throwing the clothes to one side. He really did this
@@ -125,8 +125,8 @@ I say, looked for all the world like a strip of that same patchwork quilt. Indee
 
 class LargeUpdateResource(Resource):
 
-    def __init__(self, name="Large", coap_server=None):
-        super(LargeUpdateResource, self).__init__(name, coap_server, visible=True, observable=False,
+    def __init__(self, coap_server):
+        super(LargeUpdateResource, self).__init__(coap_server, visible=True, observable=False,
                                                   allow_children=False)
         self.payload = ""
 
@@ -140,9 +140,9 @@ class LargeUpdateResource(Resource):
 
 class LongResource(Resource):
 
-    def __init__(self, name="Large", coap_server=None):
-        super(LongResource, self).__init__(name, coap_server, visible=True, observable=False,
-                                                  allow_children=False)
+    def __init__(self):
+        super(LongResource, self).__init__(visible=True, observable=False,
+                                           allow_children=False)
         self.payload = ""
 
     def render_GET(self, request):

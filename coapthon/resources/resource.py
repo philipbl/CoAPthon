@@ -5,129 +5,44 @@ class Resource(object):
     """
     The Resource class.
     """
-    def __init__(self, name, coap_server=None, visible=True, observable=True, allow_children=True):
+    def __init__(self, coap_server=None, visible=True, observable=True, allow_children=True):
         """
         Initialize a new Resource.
 
-        :param name: the name of the resource.
         :param visible: if the resource is visible
         :param observable: if the resource is observable
         :param allow_children: if the resource could has children
         """
         # The attributes of this resource.
-        self._attributes = {}
-
-        # The resource name.
-        self.name = name
+        self.attributes = {}
 
         # The resource path.
         self.path = None
 
         # Indicates whether this resource is visible to clients.
-        self._visible = visible
+        self.visible = visible
 
         # Indicates whether this resource is observable by clients.
-        self._observable = observable
+        self.observable = observable
 
-        self._allow_children = allow_children
+        self.allow_children = allow_children
 
-        self._observe_count = 1
+        self.observe_count = 1
 
         self._payload = {}
 
         self._content_type = None
 
-        self._etag = []
+        self.etag = None
 
-        self._location_query = []
+        self.location_query = []
 
-        self._max_age = None
+        self.max_age = None
 
         self._coap_server = coap_server
 
-        self._deleted = False
-        self._changed = False
-
-    @property
-    def deleted(self):
-        return self._deleted
-
-    @deleted.setter
-    def deleted(self, b):
-        self._deleted = b
-
-    @property
-    def changed(self):
-        return self._changed
-
-    @changed.setter
-    def changed(self, b):
-        self._changed = b
-
-    @property
-    def etag(self):
-        """
-        Get the last valid ETag of the resource.
-
-        :return: the ETag value or None if the resource doesn't have any ETag
-        """
-        if self._etag:
-            return self._etag[-1]
-        else:
-            return None
-
-    @etag.setter
-    def etag(self, etag):
-        """
-        Set the ETag of the resource.
-
-        :param etag: the ETag
-        """
-        self._etag.append(etag)
-
-    @property
-    def location_query(self):
-        """
-        Get the Location-Query of a resource.
-
-        :return: the Location-Query
-        """
-        return self._location_query
-
-    @location_query.setter
-    def location_query(self, lq):
-        """
-        Set the Location-Query.
-
-        :param lq: the Location-Query
-        """
-        self._location_query = lq
-
-    @location_query.deleter
-    def location_query(self):
-        """
-        Delete the Location-Query.
-
-        """
-        self.location_query = []
-
-    @property
-    def max_age(self):
-        """
-        Get the Max-Age.
-
-        :return: the Max-Age
-        """
-        return self._max_age
-
-    @max_age.setter
-    def max_age(self, ma):
-        """
-        Set the Max-Age.
-
-        :param ma: the Max-Age
-        """
-        self._max_age = ma
+        self.deleted = False
+        self.changed = False
 
     @property
     def payload(self):
@@ -166,71 +81,6 @@ class Resource(object):
             self._payload = {defines.Content_types["text/plain"]: p}
 
     @property
-    def attributes(self):
-        """
-        Get the CoRE Link Format attribute of the resource.
-
-        :return: the attribute of the resource
-        """
-        return self._attributes
-
-    @attributes.setter
-    def attributes(self, att):
-        # TODO assert
-        """
-        Set the CoRE Link Format attribute of the resource.
-
-        :param att: the attributes
-        """
-        self._attributes = att
-
-    @property
-    def visible(self):
-        """
-        Get if the resource is visible.
-
-        :return: True, if visible
-        """
-        return self._visible
-
-    @property
-    def observable(self):
-        """
-        Get if the resource is observable.
-
-        :return: True, if observable
-        """
-        return self._observable
-
-    @property
-    def allow_children(self):
-        """
-        Get if the resource allow children.
-
-        :return: True, if allow children
-        """
-        return self._allow_children
-
-    @property
-    def observe_count(self):
-        """
-        Get the Observe counter.
-
-        :return: the Observe counter value
-        """
-        return self._observe_count
-
-    @observe_count.setter
-    def observe_count(self, v):
-        """
-        Set the Observe counter.
-
-        :param v: the Observe counter value
-        """
-        assert isinstance(v, int)
-        self._observe_count = v
-
-    @property
     def actual_content_type(self):
         """
         Get the actual required Content-Type.
@@ -256,7 +106,7 @@ class Resource(object):
         :return: the CoRE Link Format ct attribute
         """
         value = ""
-        lst = self._attributes.get("ct")
+        lst = self.attributes.get("ct")
         if lst is not None and len(lst) > 0:
             value = "ct="
             for v in lst:
@@ -286,13 +136,13 @@ class Resource(object):
 
         :param ct: the CoRE Link Format ct attribute
         """
-        lst = self._attributes.get("ct")
+        lst = self.attributes.get("ct")
         if lst is None:
             lst = []
         if isinstance(ct, str):
             ct = defines.Content_types[ct]
         lst.append(ct)
-        self._attributes["ct"] = lst
+        self.attributes["ct"] = lst
 
     @property
     def resource_type(self):
@@ -302,7 +152,7 @@ class Resource(object):
         :return: the CoRE Link Format rt attribute
         """
         value = "rt="
-        lst = self._attributes.get("rt")
+        lst = self.attributes.get("rt")
         if lst is None:
             value = ""
         else:
@@ -318,7 +168,7 @@ class Resource(object):
         """
         if not isinstance(rt, str):
             rt = str(rt)
-        self._attributes["rt"] = rt
+        self.attributes["rt"] = rt
 
     @property
     def interface_type(self):
@@ -328,7 +178,7 @@ class Resource(object):
         :return: the CoRE Link Format if attribute
         """
         value = "if="
-        lst = self._attributes.get("if")
+        lst = self.attributes.get("if")
         if lst is None:
             value = ""
         else:
@@ -344,7 +194,7 @@ class Resource(object):
         """
         if not isinstance(ift, str):
             ift = str(ift)
-        self._attributes["if"] = ift
+        self.attributes["if"] = ift
 
     @property
     def maximum_size_estimated(self):
@@ -354,7 +204,7 @@ class Resource(object):
         :return: the CoRE Link Format sz attribute
         """
         value = "sz="
-        lst = self._attributes.get("sz")
+        lst = self.attributes.get("sz")
         if lst is None:
             value = ""
         else:
@@ -370,7 +220,7 @@ class Resource(object):
         """
         if not isinstance(sz, str):
             sz = str(sz)
-        self._attributes["sz"] = sz
+        self.attributes["sz"] = sz
 
     def init_resource(self, request, res):
         res.location_query = request.uri_query
