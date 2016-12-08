@@ -4,12 +4,10 @@ setup(
     name='CoAPy',
     version='4.1.3',
     packages=['coapthon', 'coapthon.layers', 'coapthon.client', 'coapthon.server', 'coapthon.messages',
-              'coapthon.forward_proxy', 'coapthon.resources', 'coapthon.reverse_proxy'],
-    url='https://github.com/Tanganelli/CoAPthon',
+              'coapthon.resources'],
+    url='https://github.com/philipbl/CoAPy',
     license='MIT License',
-    author='Giacomo Tanganelli',
-    author_email='giacomo.tanganelli@for.unipi.it',
-    description='CoAPthon is a python library to the CoAP protocol. ',
-    scripts=['coapserver.py', 'coapclient.py', 'exampleresources.py', 'coapforwardproxy.py', 'coapreverseproxy.py'],
-    requires=['sphinx']
+    author='Philip Lundrigan',
+    author_email='philiplundrigan@gmail.com',
+    description='',
 )

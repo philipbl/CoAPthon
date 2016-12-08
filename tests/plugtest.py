@@ -5,7 +5,7 @@ import socket
 import threading
 import unittest
 from coapthon.messages.message import Message
-from coapclient import HelperClient
+from coapthon.client.helperclient import HelperClient
 from coapthon.messages.response import Response
 from coapthon.messages.request import Request
 from coapthon import defines
