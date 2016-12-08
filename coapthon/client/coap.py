@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 import logging
 import logging.config
 import random
@@ -32,14 +33,6 @@ class CoAP(object):
         self._observeLayer = ObserveLayer()
         self._requestLayer = RequestLayer(self)
 
-        # try:
-        #     # legal
-        #     socket.inet_aton(server[0])
-        # except socket.error:
-        #     # Not legal
-        #     data = socket.getaddrinfo(server[0], server[1])
-        #     self._server = (data[0], data[1])
-
         host, port = self._server
         addrinfo = socket.getaddrinfo(host, None)[0]
 
@@ -50,10 +43,8 @@ class CoAP(object):
             self._socket = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
             self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-        # self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self._receiver_thread = threading.Thread(target=self.receive_datagram)
-        self._receiver_thread.daemon = True
-        self._receiver_thread.start()
+        self.thread_pool = ThreadPoolExecutor(max_workers=2)
+        self.thread_pool.submit(self.receive_datagram)
 
     @property
     def current_mid(self):
@@ -100,11 +91,11 @@ class CoAP(object):
         with transaction:
             if message.type == defines.Types['CON']:
                 future_time = random.uniform(defines.ACK_TIMEOUT, (defines.ACK_TIMEOUT * defines.ACK_RANDOM_FACTOR))
-                transaction.retransmit_thread = threading.Thread(target=self._retransmit,
-                                                                 args=(transaction, message, future_time, 0))
+
                 transaction.retransmit_stop = threading.Event()
                 self.to_be_stopped.append(transaction.retransmit_stop)
-                transaction.retransmit_thread.start()
+
+                self.thread_pool.submit(self._retransmit, (transaction, message, future_time, 0))
 
     def _retransmit(self, transaction, message, future_time, retransmit_count):
         """
