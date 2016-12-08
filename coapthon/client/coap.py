@@ -12,37 +12,22 @@ from coapthon.layers.observelayer import ObserveLayer
 from coapthon.layers.requestlayer import RequestLayer
 from coapthon.messages.request import Request
 from coapthon.serializer import Serializer
-import os.path
 
-__author__ = 'giacomo'
-
-logger = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
 class CoAP(object):
-    def __init__(self, server, starting_mid, receive_callback, timeout_callback=None):
-        self._currentMID = starting_mid
-        self._server = server
+    def __init__(self, server_host, receive_callback, timeout_callback=None):
         self._receive_callback = receive_callback
         self._timeout_callback = timeout_callback or (lambda x: x)
         self.stopped = threading.Event()
         self.to_be_stopped = []
 
-        self._messageLayer = MessageLayer(self._currentMID)
+        self._messageLayer = MessageLayer(random.randint(1, 65535))
         self._blockLayer = BlockLayer()
         self._observeLayer = ObserveLayer()
         self._requestLayer = RequestLayer(self)
 
-        # try:
-        #     # legal
-        #     socket.inet_aton(server[0])
-        # except socket.error:
-        #     # Not legal
-        #     data = socket.getaddrinfo(server[0], server[1])
-        #     self._server = (data[0], data[1])
-
-        host, port = self._server
-        addrinfo = socket.getaddrinfo(host, None)[0]
-
+        addrinfo = socket.getaddrinfo(server_host, None)[0]
         if addrinfo[0] == socket.AF_INET:
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -55,17 +40,7 @@ class CoAP(object):
         self._receiver_thread.daemon = True
         self._receiver_thread.start()
 
-    @property
-    def current_mid(self):
-        return self._currentMID
-
-    @current_mid.setter
-    def current_mid(self, c):
-        assert isinstance(c, int)
-        self._currentMID = c
-
     def send_message(self, message):
-
         if isinstance(message, Request):
             request = self._requestLayer.send_request(message)
             request = self._observeLayer.send_request(request)
@@ -82,7 +57,7 @@ class CoAP(object):
 
     def send_datagram(self, message):
         host, port = message.destination
-        logger.debug("send_datagram - " + str(message))
+        _LOGGER.debug("send_datagram - " + str(message))
         serializer = Serializer()
         message = serializer.serialize(message)
 
@@ -120,7 +95,7 @@ class CoAP(object):
                     and not self.stopped.isSet():
                 transaction.retransmit_stop.wait(timeout=future_time)
                 if not message.acknowledged and not message.rejected and not self.stopped.isSet():
-                    logger.debug("retransmit Request")
+                    _LOGGER.debug("retransmit Request")
                     retransmit_count += 1
                     future_time *= 2
                     self.send_datagram(message)
@@ -128,7 +103,7 @@ class CoAP(object):
             if message.acknowledged or message.rejected:
                 message.timeouted = False
             else:
-                logger.warning("Give up on message {message}".format(message=message.line_print))
+                _LOGGER.warning("Give up on message {message}".format(message=message.line_print))
                 message.timeouted = True
                 self._timeout_callback(message)
 
@@ -140,7 +115,7 @@ class CoAP(object):
             transaction.retransmit_thread = None
 
     def receive_datagram(self):
-        logger.debug("Start receiver Thread")
+        _LOGGER.debug("Start receiver Thread")
         while not self.stopped.isSet():
             self._socket.settimeout(1)
             try:
@@ -159,7 +134,7 @@ class CoAP(object):
             try:
                 host, port = addr
             except ValueError:
-                host, port, tmp1, tmp2 = addr
+                host, port, _, _ = addr
 
             source = (host, port)
 

@@ -13,7 +13,7 @@ __author__ = 'jacko'
 class HelperClient(object):
     def __init__(self, server):
         self.server = server
-        self.protocol = CoAP(self.server, random.randint(1, 65535), self._wait_response)
+        self.protocol = CoAP(self.server, self._wait_response)
         self.queue = Queue()
 
     def _wait_response(self, message):

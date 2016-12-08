@@ -33,7 +33,7 @@ class Tests(unittest.TestCase):
         self.server = None
 
     def _test_with_client(self, message_list):  # pragma: no cover
-        client = HelperClient(self.server_address)
+        client = HelperClient(self.server_address[0])
         for message, expected in message_list:
             if message is not None:
                 received_message = client.send_request(message)
@@ -62,7 +62,7 @@ class Tests(unittest.TestCase):
         self.queue.put(response)
 
     def _test_with_client_observe(self, message_list, callback):  # pragma: no cover
-        client = HelperClient(self.server_address)
+        client = HelperClient(self.server_address[0])
         token = None
         last_mid = 0
         for message, expected in message_list:
