@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 class CoAP(object):
     def __init__(self, server, starting_mid, receive_callback, timeout_callback=None):
+        logger.debug("Starting CoAP client")
         self._currentMID = starting_mid
         self._server = server
         self._receive_callback = receive_callback
@@ -43,8 +44,11 @@ class CoAP(object):
             self._socket = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
             self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
+        logger.debug("Creating threadpool with 2 workers")
         self.thread_pool = ThreadPoolExecutor(max_workers=2)
+        logger.debug("Submitting receive_datagram to thread pool")
         self.thread_pool.submit(self.receive_datagram)
+        logger.debug("Finished submitting receive_datagram to thread pool")
 
     @property
     def current_mid(self):
@@ -77,6 +81,7 @@ class CoAP(object):
         serializer = Serializer()
         message = serializer.serialize(message)
 
+        logger.debug("Sending datagram")
         self._socket.sendto(message, (host, port))
 
     def _start_retransmission(self, transaction, message):
@@ -95,7 +100,9 @@ class CoAP(object):
                 transaction.retransmit_stop = threading.Event()
                 self.to_be_stopped.append(transaction.retransmit_stop)
 
+                logger.debug("Submitting retransmit to thread pool")
                 self.thread_pool.submit(self._retransmit, (transaction, message, future_time, 0))
+                logger.debug("Finished submitting retransmit to thread pool")
 
     def _retransmit(self, transaction, message, future_time, retransmit_count):
         """
@@ -106,9 +113,17 @@ class CoAP(object):
         :param future_time: the amount of time to wait before a new attempt
         :param retransmit_count: the number of retransmissions
         """
+        logger.debug("Inside _retransmit")
         with transaction:
+            logger.debug("About to retransmit packet")
+            logger.debug("retransmit_count: %s, acknowledged: %s, rejected: %s, isSet: %s",
+                         retransmit_count,
+                         message.acknowledged,
+                         message.rejected,
+                         self.stopped.isSet())
             while retransmit_count < defines.MAX_RETRANSMIT and (not message.acknowledged and not message.rejected) \
                     and not self.stopped.isSet():
+                logger.debug("Waiting for %s before retransmitting", future_time)
                 transaction.retransmit_stop.wait(timeout=future_time)
                 if not message.acknowledged and not message.rejected and not self.stopped.isSet():
                     logger.debug("retransmit Request")
@@ -122,13 +137,16 @@ class CoAP(object):
                 logger.warning("Give up on message {message}".format(message=message.line_print))
                 message.timeouted = True
                 self._timeout_callback(message)
+                logger.debug("Finished with _timeout_callback")
 
             try:
+                logger.debug("Removing retransmit_stop from to_be_stopped")
                 self.to_be_stopped.remove(transaction.retransmit_stop)
             except ValueError:
                 pass
             transaction.retransmit_stop = None
             transaction.retransmit_thread = None
+            logger.debug("Finished with _retransmit")
 
     def receive_datagram(self):
         logger.debug("Start receiver Thread")
@@ -146,6 +164,7 @@ class CoAP(object):
                     return
 
             serializer = Serializer()
+            logger.debug("receive_datagram: Received a packet")
 
             try:
                 host, port = addr
