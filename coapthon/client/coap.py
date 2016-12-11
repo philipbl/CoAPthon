@@ -44,11 +44,14 @@ class CoAP(object):
             self._socket = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
             self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-        logger.debug("Creating threadpool with 2 workers")
-        self.thread_pool = ThreadPoolExecutor(max_workers=2)
-        logger.debug("Submitting receive_datagram to thread pool")
-        self.thread_pool.submit(self.receive_datagram)
-        logger.debug("Finished submitting receive_datagram to thread pool")
+        logger.debug("Creating new thread for receive_datagram")
+        self._receiver_thread = threading.Thread(target=self.receive_datagram)
+        self._receiver_thread.daemon = True
+        self._receiver_thread.start()
+        logger.debug("Finished creating new thread for receive_datagram")
+
+        logger.debug("Creating threadpool with 1 workers")
+        self.thread_pool = ThreadPoolExecutor(max_workers=1)
 
     @property
     def current_mid(self):
