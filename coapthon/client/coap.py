@@ -66,6 +66,21 @@ class CoAP(object):
         assert isinstance(c, int)
         self._currentMID = c
 
+    def stop(self):
+        logger.debug("Stopping CoAP client")
+
+        # Signal to everyone that we are stopping
+        self.stopped.set()
+
+        # Signal all current retransmissions
+        for event in self.to_be_stopped:
+            event.set()
+
+        # Make sure all messages are done being processed
+        self._send_message_queue.join()
+
+        logger.debug("Done stopping CoAP client")
+
     def send_message(self, message):
         self._send_message_queue.put(message)
 
