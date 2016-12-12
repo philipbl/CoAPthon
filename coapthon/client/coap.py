@@ -1,6 +1,6 @@
-from concurrent.futures import ThreadPoolExecutor
 import logging
 import logging.config
+from queue import Queue, Empty
 import random
 import socket
 import threading
@@ -50,8 +50,12 @@ class CoAP(object):
         self._receiver_thread.start()
         logger.debug("Finished creating new thread for receive_datagram")
 
-        logger.debug("Creating threadpool with 1 workers")
-        self.thread_pool = ThreadPoolExecutor(max_workers=1)
+        self._send_message_queue = Queue()
+
+        logger.debug("Creating new thread for sending_message")
+        self._send_message_thread = threading.Thread(target=self._send_message)
+        self._send_message_thread.start()
+        logger.debug("Finished creating new thread for sending_message")
 
     @property
     def current_mid(self):
@@ -63,20 +67,30 @@ class CoAP(object):
         self._currentMID = c
 
     def send_message(self, message):
+        self._send_message_queue.put(message)
 
-        if isinstance(message, Request):
-            request = self._requestLayer.send_request(message)
-            request = self._observeLayer.send_request(request)
-            request = self._blockLayer.send_request(request)
-            transaction = self._messageLayer.send_request(request)
-            if transaction.request.type == defines.Types["CON"]:
-                self._start_retransmission(transaction, transaction.request)
+    def _send_message(self):
+        while not self.stopped.isSet():
+            logger.debug("Waiting for a message to send")
+            message = self._send_message_queue.get()
 
-            self.send_datagram(transaction.request)
-        elif isinstance(message, Message):
-            message = self._observeLayer.send_empty(message)
-            message = self._messageLayer.send_empty(None, None, message)
-            self.send_datagram(message)
+            if isinstance(message, Request):
+                request = self._requestLayer.send_request(message)
+                request = self._observeLayer.send_request(request)
+                request = self._blockLayer.send_request(request)
+                transaction = self._messageLayer.send_request(request)
+
+                self.send_datagram(transaction.request)
+
+                if transaction.request.type == defines.Types["CON"]:
+                    self._start_retransmission(transaction, transaction.request)
+
+            elif isinstance(message, Message):
+                message = self._observeLayer.send_empty(message)
+                message = self._messageLayer.send_empty(None, None, message)
+                self.send_datagram(message)
+
+            self._send_message_queue.task_done()
 
     def send_datagram(self, message):
         host, port = message.destination
@@ -102,10 +116,7 @@ class CoAP(object):
 
                 transaction.retransmit_stop = threading.Event()
                 self.to_be_stopped.append(transaction.retransmit_stop)
-
-                logger.debug("Submitting retransmit to thread pool")
-                self.thread_pool.submit(self._retransmit, (transaction, message, future_time, 0))
-                logger.debug("Finished submitting retransmit to thread pool")
+                self._retransmit(transaction, message, future_time, 0)
 
     def _retransmit(self, transaction, message, future_time, retransmit_count):
         """
@@ -116,9 +127,8 @@ class CoAP(object):
         :param future_time: the amount of time to wait before a new attempt
         :param retransmit_count: the number of retransmissions
         """
-        logger.debug("Inside _retransmit")
         with transaction:
-            logger.debug("About to retransmit packet")
+            logger.debug("Starting retransmit packet")
             logger.debug("retransmit_count: %s, acknowledged: %s, rejected: %s, isSet: %s",
                          retransmit_count,
                          message.acknowledged,
@@ -128,11 +138,23 @@ class CoAP(object):
                     and not self.stopped.isSet():
                 logger.debug("Waiting for %s before retransmitting", future_time)
                 transaction.retransmit_stop.wait(timeout=future_time)
+
+                if self.stopped.isSet():
+                    logger.debug("Stopping retransmission because stopped is set")
+                    return
+
                 if not message.acknowledged and not message.rejected and not self.stopped.isSet():
                     logger.debug("retransmit Request")
                     retransmit_count += 1
                     future_time *= 2
                     self.send_datagram(message)
+
+            logger.debug("Done retransmitting packets")
+            logger.debug("retransmit_count: %s, acknowledged: %s, rejected: %s, isSet: %s",
+                         retransmit_count,
+                         message.acknowledged,
+                         message.rejected,
+                         self.stopped.isSet())
 
             if message.acknowledged or message.rejected:
                 message.timeouted = False
@@ -140,16 +162,13 @@ class CoAP(object):
                 logger.warning("Give up on message {message}".format(message=message.line_print))
                 message.timeouted = True
                 self._timeout_callback(message)
-                logger.debug("Finished with _timeout_callback")
 
             try:
-                logger.debug("Removing retransmit_stop from to_be_stopped")
                 self.to_be_stopped.remove(transaction.retransmit_stop)
             except ValueError:
                 pass
             transaction.retransmit_stop = None
             transaction.retransmit_thread = None
-            logger.debug("Finished with _retransmit")
 
     def receive_datagram(self):
         logger.debug("Start receiver Thread")
