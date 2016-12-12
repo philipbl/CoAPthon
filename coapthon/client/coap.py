@@ -50,11 +50,12 @@ class CoAP(object):
         self._receiver_thread.start()
         logger.debug("Finished creating new thread for receive_datagram")
 
-        self._send_message_queue = Queue()
+        self._sender_queue = Queue()
 
         logger.debug("Creating new thread for sending_message")
-        self._send_message_thread = threading.Thread(target=self._send_message)
-        self._send_message_thread.start()
+        self._sender_thread = threading.Thread(target=self._send_message)
+        self._sender_thread.daemon = True
+        self._sender_thread.start()
         logger.debug("Finished creating new thread for sending_message")
 
     @property
@@ -72,22 +73,26 @@ class CoAP(object):
         # Signal to everyone that we are stopping
         self.stopped.set()
 
+        # Add to sender queue to stop it from blocking
+        self._sender_queue.put(None)
+
         # Signal all current retransmissions
         for event in self.to_be_stopped:
             event.set()
 
-        # Make sure all messages are done being processed
-        self._send_message_queue.join()
+        logger.debug("Waiting for sender and receiver threads")
+        self._sender_thread.join()
+        self._receiver_thread.join()
 
         logger.debug("Done stopping CoAP client")
 
     def send_message(self, message):
-        self._send_message_queue.put(message)
+        self._sender_queue.put(message)
 
     def _send_message(self):
         while not self.stopped.isSet():
             logger.debug("Waiting for a message to send")
-            message = self._send_message_queue.get()
+            message = self._sender_queue.get()
 
             if isinstance(message, Request):
                 request = self._requestLayer.send_request(message)
@@ -105,7 +110,7 @@ class CoAP(object):
                 message = self._messageLayer.send_empty(None, None, message)
                 self.send_datagram(message)
 
-            self._send_message_queue.task_done()
+            self._sender_queue.task_done()
 
     def send_datagram(self, message):
         host, port = message.destination
