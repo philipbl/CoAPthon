@@ -1,6 +1,6 @@
-from concurrent.futures import ThreadPoolExecutor
 import logging
 import logging.config
+from queue import Queue, Empty
 import random
 import socket
 import threading
@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 class CoAP(object):
     def __init__(self, server, starting_mid, receive_callback, timeout_callback=None):
+        logger.debug("Starting CoAP client")
         self._currentMID = starting_mid
         self._server = server
         self._receive_callback = receive_callback
@@ -43,8 +44,19 @@ class CoAP(object):
             self._socket = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
             self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-        self.thread_pool = ThreadPoolExecutor(max_workers=2)
-        self.thread_pool.submit(self.receive_datagram)
+        logger.debug("Creating new thread for receive_datagram")
+        self._receiver_thread = threading.Thread(target=self.receive_datagram)
+        self._receiver_thread.daemon = True
+        self._receiver_thread.start()
+        logger.debug("Finished creating new thread for receive_datagram")
+
+        self._sender_queue = Queue()
+
+        logger.debug("Creating new thread for sending_message")
+        self._sender_thread = threading.Thread(target=self._send_message)
+        self._sender_thread.daemon = True
+        self._sender_thread.start()
+        logger.debug("Finished creating new thread for sending_message")
 
     @property
     def current_mid(self):
@@ -55,21 +67,50 @@ class CoAP(object):
         assert isinstance(c, int)
         self._currentMID = c
 
+    def stop(self):
+        logger.debug("Stopping CoAP client")
+
+        # Signal to everyone that we are stopping
+        self.stopped.set()
+
+        # Add to sender queue to stop it from blocking
+        self._sender_queue.put(None)
+
+        # Signal all current retransmissions
+        for event in self.to_be_stopped:
+            event.set()
+
+        logger.debug("Waiting for sender and receiver threads")
+        self._sender_thread.join()
+        self._receiver_thread.join()
+
+        logger.debug("Done stopping CoAP client")
+
     def send_message(self, message):
+        self._sender_queue.put(message)
 
-        if isinstance(message, Request):
-            request = self._requestLayer.send_request(message)
-            request = self._observeLayer.send_request(request)
-            request = self._blockLayer.send_request(request)
-            transaction = self._messageLayer.send_request(request)
-            if transaction.request.type == defines.Types["CON"]:
-                self._start_retransmission(transaction, transaction.request)
+    def _send_message(self):
+        while not self.stopped.isSet():
+            logger.debug("Waiting for a message to send")
+            message = self._sender_queue.get()
 
-            self.send_datagram(transaction.request)
-        elif isinstance(message, Message):
-            message = self._observeLayer.send_empty(message)
-            message = self._messageLayer.send_empty(None, None, message)
-            self.send_datagram(message)
+            if isinstance(message, Request):
+                request = self._requestLayer.send_request(message)
+                request = self._observeLayer.send_request(request)
+                request = self._blockLayer.send_request(request)
+                transaction = self._messageLayer.send_request(request)
+
+                self.send_datagram(transaction.request)
+
+                if transaction.request.type == defines.Types["CON"]:
+                    self._start_retransmission(transaction, transaction.request)
+
+            elif isinstance(message, Message):
+                message = self._observeLayer.send_empty(message)
+                message = self._messageLayer.send_empty(None, None, message)
+                self.send_datagram(message)
+
+            self._sender_queue.task_done()
 
     def send_datagram(self, message):
         host, port = message.destination
@@ -77,6 +118,7 @@ class CoAP(object):
         serializer = Serializer()
         message = serializer.serialize(message)
 
+        logger.debug("Sending datagram")
         self._socket.sendto(message, (host, port))
 
     def _start_retransmission(self, transaction, message):
@@ -94,8 +136,7 @@ class CoAP(object):
 
                 transaction.retransmit_stop = threading.Event()
                 self.to_be_stopped.append(transaction.retransmit_stop)
-
-                self.thread_pool.submit(self._retransmit, (transaction, message, future_time, 0))
+                self._retransmit(transaction, message, future_time, 0)
 
     def _retransmit(self, transaction, message, future_time, retransmit_count):
         """
@@ -107,14 +148,33 @@ class CoAP(object):
         :param retransmit_count: the number of retransmissions
         """
         with transaction:
+            logger.debug("Starting retransmit packet")
+            logger.debug("retransmit_count: %s, acknowledged: %s, rejected: %s, isSet: %s",
+                         retransmit_count,
+                         message.acknowledged,
+                         message.rejected,
+                         self.stopped.isSet())
             while retransmit_count < defines.MAX_RETRANSMIT and (not message.acknowledged and not message.rejected) \
                     and not self.stopped.isSet():
+                logger.debug("Waiting for %s before retransmitting", future_time)
                 transaction.retransmit_stop.wait(timeout=future_time)
+
+                if self.stopped.isSet():
+                    logger.debug("Stopping retransmission because stopped is set")
+                    return
+
                 if not message.acknowledged and not message.rejected and not self.stopped.isSet():
                     logger.debug("retransmit Request")
                     retransmit_count += 1
                     future_time *= 2
                     self.send_datagram(message)
+
+            logger.debug("Done retransmitting packets")
+            logger.debug("retransmit_count: %s, acknowledged: %s, rejected: %s, isSet: %s",
+                         retransmit_count,
+                         message.acknowledged,
+                         message.rejected,
+                         self.stopped.isSet())
 
             if message.acknowledged or message.rejected:
                 message.timeouted = False
@@ -146,6 +206,7 @@ class CoAP(object):
                     return
 
             serializer = Serializer()
+            logger.debug("receive_datagram: Received a packet")
 
             try:
                 host, port = addr
